@@ -9,7 +9,6 @@ from typing import Any, Iterable, Iterator
 import heapq
 
 Graph = __import__("Graph & Node").Graph
-Vertex = __import__("Graph & Node")._Vertex
 
 #############################################################################
 # PUBLIC INTERFACE
@@ -19,11 +18,13 @@ Vertex = __import__("Graph & Node")._Vertex
 def dijkstra(g: Graph, a: Any, b: Any) -> Path:
     """Return the Path containing the smallest cumulative weight from point a to b"""
 
-    v_i = g._vertices[a]
-    p_i = _PathNode(v_i.item, 0)
-    visited_vertices = {v_i: p_i}
+    # starts at the end because the path is built in reverse order
+    v_end = g._vertices[a]
+    p_end = _PathNode(v_end.item, 0)
 
-    heap = [p_i]
+    visited_vertices = {v_end: p_end}
+
+    heap = [p_end]
 
     def recursive_dijkstra() -> Path:
         """Recursively calls the dijkstra alg on the globally accessible heap"""
@@ -52,7 +53,7 @@ def dijkstra(g: Graph, a: Any, b: Any) -> Path:
 
 
 class Path(Iterable):
-    """Public interface containing the information for a path"""
+    """Interface for getting information about a path"""
 
     def __len__(self) -> int:
         raise NotImplementedError
