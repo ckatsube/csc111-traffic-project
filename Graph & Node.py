@@ -3,6 +3,7 @@ from typing import Any, Union
 import csv
 import networkx as nx
 
+
 # The following code initialises the Vertex and Graph class, and also defines basic functions
 # that we would use throughout our project. In addition to this it also has the function that
 # constructs a graph with given dataset
@@ -10,7 +11,6 @@ import networkx as nx
 
 class _Vertex:
     """A vertex in the Graph that represents a checkpoint location in Chicago city.
-
         Instance Attributes:
         - item: The name of street location.
         - neighbours: The vertices that are adjacent to this vertex, and their corresponding
@@ -43,7 +43,6 @@ class _Vertex:
 
     def print_all_connected(self, visited: set[_Vertex]) -> None:
         """Print all streets that this vertex is connected to.
-
         Example - To check the possible routes from Madison
         graph._vertices['Madison'].print_all_connected(set())
         """
@@ -108,10 +107,8 @@ class Graph:
     # temp function for visualization
     def to_networkx(self, max_vertices: int = 5000) -> nx.Graph:
         """Convert this graph into a networkx Graph.
-
         max_vertices specifies the maximum number of vertices that can appear in the graph.
         (This is necessary to limit the visualization output for large graphs.)
-
         Note that this method is provided for you, and you shouldn't change it.
         """
         graph_nx = nx.Graph()
@@ -133,7 +130,6 @@ class Graph:
     def connected(self, item1: Any, item2: Any) -> bool:
         """Return whether item1 and item2 are connected vertices
         in this graph.
-
         Return False if item1 or item2 do not appear as vertices
         in this graph.
         """
@@ -146,7 +142,6 @@ class Graph:
 
     def in_cycle(self, item: Any) -> bool:
         """Return whether the given item is in a cycle in this graph.
-
         Return False if item does not appears as a vertex in this graph.
         """
         if item not in self._vertices:
@@ -157,6 +152,34 @@ class Graph:
                     if n.check_connected(item, set()) and len(n.neighbours) >= 2:
                         return True
             return False
+
+    def get_weight(self, item1: Any, item2: Any) -> Union[int, float]:
+        """Return the weight of the edge between the given items.
+        Precondition:
+            - item1 and item2 are vertices in this graph
+        """
+        v1 = self._vertices[item1]
+        v2 = self._vertices[item2]
+        return v1.neighbours.get(v2, 0)
+
+    def get_all_vertices(self, kind: str = '') -> set:
+        """Return a set of all vertex items in this graph.
+        If kind != '', only return the items of the given vertex kind.
+        """
+        if kind != '':
+            return {v.item for v in self._vertices.values() if v.kind == kind}
+        else:
+            return set(self._vertices.keys())
+
+    def get_neighbours(self, item: Any) -> set:
+        """Return a set of the neighbours of the given item.
+        Raise a ValueError if item does not appear as a vertex in this graph.
+        """
+        if item in self._vertices:
+            v = self._vertices[item]
+            return {neighbour for neighbour in v.neighbours}
+        else:
+            raise ValueError
 
 
 def traffic_heuristic(item1, item2) -> float:
@@ -172,7 +195,6 @@ def load_graph(chicago_traffic_file: str) -> Graph:
     row[5] refers to the starting point (street) and row[6] refers to the ending point (street).
     row[13] refers to the day of the week and row[14] refers to the month.
     For now, I am filtering rows and only reading ones for Thursday 5PM in March.
-
     row[2] refers to the speed and row [7] refers to the length of the route. We compute the
     weighted portion of the vertex by calculating length/speed to obtain the time taken between the
     starting and ending points.
@@ -190,7 +212,8 @@ def load_graph(chicago_traffic_file: str) -> Graph:
                 if not graph.check_in(row[6]):
                     graph.add_vertex(row[6])  # adding ending vertex if it's not
                     # in the graph already
-                graph.add_edge(row[5], row[6], row[2], row[7])  # represents a route from starting to
+                graph.add_edge(row[5], row[6], row[2],
+                               row[7])  # represents a route from starting to
                 # ending point
 
     return graph
@@ -207,7 +230,6 @@ def visualize_graph(graph: Graph,
                     max_vertices: int = 5000,
                     output_file: str = '') -> None:
     """Use plotly and networkx to visualize the given graph.
-
     Optional arguments:
         - layout: which graph layout algorithm to use
         - max_vertices: the maximum number of vertices that can appear in the graph
