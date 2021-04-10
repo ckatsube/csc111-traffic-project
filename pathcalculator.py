@@ -15,12 +15,20 @@ Graph = __import__("Graph & Node").Graph
 #############################################################################
 
 
-def get_shortest_path_map(g: Graph, start: Any, end: Any, points: list) -> dict[Any, dict[Any, Path]]:
+def get_shortest_path_map(g: Graph,
+                          start: Any, end: Any, points: list) -> dict[Any, dict[Any, Path]]:
     """Return the mapping of relevant shortest paths between points from start to end
 
+    Output format:
+        - dict[a][b] == Shortest path from a to b
+        - dict[b][a] == Shortest path from b to a
+
     All internal points are mapped to all other internal points
+        - dict[a][b] for any unique pair a and b in points
     The start key is mapped to all internal points (one direction)
+        - dict[start][a] for any a in points
     All internal points are mapped to the end point (one direction)
+        - dict[a][end] for any a in points
     """
 
     shortest_map = {start: {},
@@ -46,19 +54,15 @@ def get_shortest_path_map(g: Graph, start: Any, end: Any, points: list) -> dict[
     return shortest_map
 
 
-def get_shortest_graph(g: Graph, start: Any, end: Any, points: list) -> Graph:
-    """Return a graph containing information about the shortest distance between points
-
-    The subgraph containing the sub-points is a complete graph
-    The start and end points are both connected to all internal points, but not to each other
+def convert_shortest_map_to_graph(shortest_map: dict[Any, dict[Any, Path]]) -> Graph:
+    """Return the graph containing information about the shortest distance between points
+    using the edges contained within the shortest_map
     """
-
-    shortest_map = get_shortest_path_map(g, start, end, points)
 
     shortest_graph = Graph()
 
-    shortest_graph.add_vertex(start)
-    shortest_graph.add_vertex(end)
+    points = _get_all_points(shortest_map)
+
     for point in points:
         shortest_graph.add_vertex(point)
 
@@ -67,6 +71,28 @@ def get_shortest_graph(g: Graph, start: Any, end: Any, points: list) -> Graph:
             shortest_graph.add_edge(point, end_point, path.get_path_weight(), 1)
 
     return shortest_graph
+
+
+def get_shortest_map_and_graph(g: Graph, start: Any, end: Any, points: list) ->\
+        tuple[dict[Any, dict[Any, Path]], Graph]:
+    """Return both the shortest map and graph according to get_shortest_map and _graph
+    """
+
+    shortest_map = get_shortest_graph(g, start, end, points)
+    shortest_graph = convert_shortest_map_to_graph(shortest_map)
+
+    return shortest_map, shortest_graph
+
+
+def get_shortest_graph(g: Graph, start: Any, end: Any, points: list) -> Graph:
+    """Return a graph containing information about the shortest distance between points
+
+    The subgraph containing the sub-points is a complete graph
+    The start and end points are both connected to all internal points, but not to each other
+    """
+
+    shortest_map = get_shortest_path_map(g, start, end, points)
+    return convert_shortest_map_to_graph(shortest_map)
 
 
 def dijkstra(g: Graph, start: Any, end: Any) -> Path:
@@ -145,6 +171,14 @@ def _dijkstra(g: Graph, start: Any, end: Any) -> _Node:
             return _NullPathNode()
 
     return recursive_dijkstra()
+
+
+def _get_all_points(shortest_map: dict[Any, dict[Any, Path]]) -> set[Any]:
+    key_set = set(shortest_map)
+    one_value_set = set(list(shortest_map.values())[0])
+    # the key_set contains all points except the end point.
+    # All value sets contain the end point (so only one is needed to get it)
+    return set.union(key_set, one_value_set)
 
 
 class _Node(Path, ABC):
@@ -273,19 +307,3 @@ class _NodeIterator(_PathIterator[_Node]):
         cur = self._current_node
         self._current_node = self._current_node.get_next()
         return cur
-
-
-m_g = Graph()
-
-m_g.add_vertex(1)
-m_g.add_vertex(2)
-m_g.add_vertex(3)
-m_g.add_vertex(4)
-
-m_g.add_edge(1, 2, 10, 1)
-m_g.add_edge(1, 3, 1, 1)
-m_g.add_edge(2, 3, 1, 1)
-m_g.add_edge(2, 4, 1, 1)
-m_g.add_edge(3, 4, 10, 1)
-
-my_path = dijkstra(m_g, 1, 4)
