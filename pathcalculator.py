@@ -140,10 +140,10 @@ def _dijkstra(g: Graph, start: Any, end: Any) -> _Node:
     """Return the _Node containing the smallest cumulative weight from point a to b"""
 
     # starts at the end because the path is built in reverse order
-    v_end = g._vertices[end]
-    p_end = _PathNode(v_end.item, 0)
+    item_end = end
+    p_end = _PathNode(item_end, 0)
 
-    visited_vertices = {v_end: p_end}
+    visited_vertices = {item_end: p_end}
 
     heap = [p_end]
 
@@ -154,16 +154,19 @@ def _dijkstra(g: Graph, start: Any, end: Any) -> _Node:
         if heap_is_not_empty:
 
             p = heapq.heappop(heap)
-            v = g._vertices[p.get_item()]
+            v = p.get_item()
             visited_vertices[v] = p
 
-            end_of_path = v.item == start
+            end_of_path = (v == start)
             if end_of_path:
                 return p
 
-            for neighbour, weight in v.neighbours.items():
-                if neighbour not in visited_vertices:
-                    next_path = _PathNode(neighbour.item, weight, p)
+            for neighbour_vertex in g.get_neighbours(v):
+                u = neighbour_vertex.item
+
+                if u not in visited_vertices:
+                    weight = g.get_weight(u, v)
+                    next_path = _PathNode(u, weight, p)
                     heapq.heappush(heap, next_path)
 
             return recursive_dijkstra()
@@ -282,7 +285,7 @@ class _PathIterator(Iterator[Any]):
 class _ItemIterator(_PathIterator[Any]):
     """Iterator pattern class for iterating through the items in a path formed by _PathNodes
 
-    Iterates through the _PathNode .next chain in order.
+    Iterates through the _PathNode .next chain in order and returns the item of each _Node.
     """
 
     _wrapped_iterator: _NodeIterator
@@ -296,7 +299,10 @@ class _ItemIterator(_PathIterator[Any]):
 
 
 class _NodeIterator(_PathIterator[_Node]):
-    """Iterator pattern class for iterating through the _Node chain"""
+    """Iterator pattern class for iterating through the _Node chain
+
+    Returns the _Node object at each iteration
+    """
 
     _current_node: _Node
 
