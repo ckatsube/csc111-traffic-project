@@ -162,14 +162,10 @@ class Graph:
         v2 = self._vertices[item2]
         return v1.neighbours.get(v2, 0)
 
-    def get_all_vertices(self, kind: str = '') -> set:
+    def get_all_vertices(self) -> set:
         """Return a set of all vertex items in this graph.
-        If kind != '', only return the items of the given vertex kind.
         """
-        if kind != '':
-            return {v.item for v in self._vertices.values() if v.kind == kind}
-        else:
-            return set(self._vertices.keys())
+        return set(self._vertices.keys())
 
     def get_neighbours(self, item: Any) -> set:
         """Return a set of the neighbours of the given item.
@@ -204,16 +200,16 @@ def load_graph(chicago_traffic_file: str) -> Graph:
         traffic_data = csv.reader(csv_file2)
         next(traffic_data)  # to skip the first row
         for row in traffic_data:
-            if row[12] == '17' and row[13] == '4' and row[14] == '3':  # Only reads data for 5PM
+            if row[10] == '17' and row[11] == '4' and row[12] == '3':  # Only reads data for 5PM
                 # Thursdays in March
-                if not graph.check_in(row[5]):
-                    graph.add_vertex(row[5])  # adding starting vertex if it's not
-                    # in the graph already
                 if not graph.check_in(row[6]):
-                    graph.add_vertex(row[6])  # adding ending vertex if it's not
+                    graph.add_vertex(row[6])  # adding starting vertex if it's not
                     # in the graph already
-                graph.add_edge(row[5], row[6], row[2],
-                               row[7])  # represents a route from starting to
+                if not graph.check_in(row[7]):
+                    graph.add_vertex(row[7])  # adding ending vertex if it's not
+                    # in the graph already
+                graph.add_edge(row[6], row[7], row[3],
+                               row[8])  # represents a route from starting to
                 # ending point
 
     return graph
