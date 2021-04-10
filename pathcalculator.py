@@ -15,18 +15,113 @@ Graph = __import__("Graph & Node").Graph
 #############################################################################
 
 
-def dijkstra(g: Graph, a: Any, b: Any) -> Path:
+def get_shortest_path_map(g: Graph, start: Any, end: Any, points: list) -> dict[Any, dict[Any, Path]]:
+    """Return the mapping of relevant shortest paths between points from start to end
+
+    All internal points are mapped to all other internal points
+    The start key is mapped to all internal points (one direction)
+    All internal points are mapped to the end point (one direction)
+    """
+
+    shortest_map = {start: {},
+                    end: {}}
+    for point in points:
+        shortest_map[point] = {}
+
+    for point in points:
+        for other in points:
+            if other != point:
+                shortest_path = _dijkstra(g, point, other)
+                reverse = shortest_path.get_reversed()
+
+                shortest_map[point][other] = shortest_path
+                shortest_map[other][point] = reverse
+
+        from_start = _dijkstra(g, start, point)
+        shortest_map[start][point] = from_start
+
+        to_end = _dijkstra(g, point, end)
+        shortest_map[point][end] = to_end
+
+    return shortest_map
+
+
+def get_shortest_graph(g: Graph, start: Any, end: Any, points: list) -> Graph:
+    """Return a graph containing information about the shortest distance between points
+
+    The subgraph containing the sub-points is a complete graph
+    The start and end points are both connected to all internal points, but not to each other
+    """
+
+    shortest_map = get_shortest_path_map(g, start, end, points)
+
+    shortest_graph = Graph()
+
+    shortest_graph.add_vertex(start)
+    shortest_graph.add_vertex(end)
+    for point in points:
+        shortest_graph.add_vertex(point)
+
+    for point, end_points in shortest_map.items():
+        for end_point, path in end_points.items():
+            shortest_graph.add_edge(point, end_point, path.get_path_weight(), 1)
+
+    return shortest_graph
+
+
+def dijkstra(g: Graph, start: Any, end: Any) -> Path:
     """Return the Path containing the smallest cumulative weight from point a to b"""
+    return _dijkstra(g, start, end)
+
+
+class Path(Iterable):
+    """Interface for getting information about a path"""
+
+    def __len__(self) -> int:
+        raise NotImplementedError
+
+    def get_weight(self) -> float:
+        """Return the weight of this Path"""
+        raise NotImplementedError
+
+    def get_path_weight(self) -> float:
+        """Return the cumulative weight along the path this Path is a part of"""
+        raise NotImplementedError
+
+    def get_item(self) -> Any:
+        """Return the item associated with this Path"""
+        raise NotImplementedError
+
+    def get_reversed(self) -> _Node:
+        """Return the Path in reverse order from self"""
+        raise NotImplementedError
+
+    def __iter__(self) -> _PathIterator[Any]:
+        """Return an iterator that can traverse the path"""
+        raise NotImplementedError
+
+    def __lt__(self, other: Path):
+        """Return whether this Path has a smaller weight than the other Path"""
+        return self.get_path_weight() < other.get_path_weight()
+
+
+#############################################################################
+# PRIVATE INTERFACE
+#############################################################################
+
+
+def _dijkstra(g: Graph, start: Any, end: Any) -> _Node:
+    """Return the _Node containing the smallest cumulative weight from point a to b"""
 
     # starts at the end because the path is built in reverse order
-    v_end = g._vertices[a]
+    v_end = g._vertices[end]
     p_end = _PathNode(v_end.item, 0)
 
     visited_vertices = {v_end: p_end}
 
     heap = [p_end]
 
-    def recursive_dijkstra() -> Path:
+    def recursive_dijkstra() -> _Node:
         """Recursively calls the dijkstra alg on the globally accessible heap"""
 
         heap_is_not_empty = (heap != [])
@@ -36,7 +131,7 @@ def dijkstra(g: Graph, a: Any, b: Any) -> Path:
             v = g._vertices[p.get_item()]
             visited_vertices[v] = p
 
-            end_of_path = v.item == b
+            end_of_path = v.item == start
             if end_of_path:
                 return p
 
@@ -52,37 +147,6 @@ def dijkstra(g: Graph, a: Any, b: Any) -> Path:
     return recursive_dijkstra()
 
 
-class Path(Iterable):
-    """Interface for getting information about a path"""
-
-    def __len__(self) -> int:
-        raise NotImplementedError
-
-    def get_weight(self) -> float:
-        """Return the weight of this _Node"""
-        raise NotImplementedError
-
-    def get_path_weight(self) -> float:
-        """Return the cumulative weight along the path this _Node is a part of"""
-        raise NotImplementedError
-
-    def get_item(self) -> Any:
-        """Return the item associated with this _Node"""
-        raise NotImplementedError
-
-    def __iter__(self) -> Iterator[Any]:
-        """Return an iterator that can traverse the path"""
-        raise NotImplementedError
-
-    def __lt__(self, other: Path):
-        """Return whether this Path has a smaller weight than the other Path"""
-        return self.get_path_weight() < other.get_path_weight()
-
-
-#############################################################################
-# PRIVATE INTERFACE
-#############################################################################
-
 class _Node(Path, ABC):
     """Abstract Iterable class for hiding the interface for manually iterating through the path"""
 
@@ -91,7 +155,7 @@ class _Node(Path, ABC):
         raise NotImplementedError
 
     def __iter__(self) -> _PathIterator:
-        return _PathIterator(self)
+        return _ItemIterator(self)
 
 
 class _NullPathNode(_Node):
@@ -108,6 +172,10 @@ class _NullPathNode(_Node):
     def get_path_weight(self) -> float:
         """There is no path, hence no weight, so return 0"""
         return 0
+
+    def get_reversed(self) -> _Node:
+        """Return a copy of self since no reverse exists"""
+        return _NullPathNode()
 
     def get_next(self) -> _Node:
         """Raise a stop iteration error because no next exists"""
@@ -149,6 +217,14 @@ class _PathNode(_Node):
         """Return the item associated with this _PathNode"""
         return self._item
 
+    def get_reversed(self) -> _Node:
+        """Return the _PathNode at the end of an entirely reversed chain"""
+        parent = _NullPathNode()
+        for node in _NodeIterator(self):
+            parent = _PathNode(node.get_item(), node.get_weight(), parent)
+
+        return parent
+
     def get_next(self) -> _Node:
         """Return the _Node preceding this one in the path"""
         return self._next
@@ -163,17 +239,53 @@ class _PathNode(_Node):
 
 
 class _PathIterator(Iterator[Any]):
-    """Iterator pattern class for iterating through the path formed by _PathNodes
+    """Iterator pattern class for iterating through a Path"""
+
+    def __next__(self) -> Any:
+        raise NotImplementedError
+
+
+class _ItemIterator(_PathIterator[Any]):
+    """Iterator pattern class for iterating through the items in a path formed by _PathNodes
 
     Iterates through the _PathNode .next chain in order.
     """
+
+    _wrapped_iterator: _NodeIterator
+
+    def __init__(self, initial_node: _Node):
+        self._wrapped_iterator = _NodeIterator(initial_node)
+
+    def __next__(self) -> Any:
+        node = self._wrapped_iterator.__next__()
+        return node.get_item()
+
+
+class _NodeIterator(_PathIterator[_Node]):
+    """Iterator pattern class for iterating through the _Node chain"""
 
     _current_node: _Node
 
     def __init__(self, initial_node: _Node):
         self._current_node = initial_node
 
-    def __next__(self) -> Any:
+    def __next__(self) -> _Node:
         cur = self._current_node
         self._current_node = self._current_node.get_next()
-        return cur.get_item()
+        return cur
+
+
+m_g = Graph()
+
+m_g.add_vertex(1)
+m_g.add_vertex(2)
+m_g.add_vertex(3)
+m_g.add_vertex(4)
+
+m_g.add_edge(1, 2, 10, 1)
+m_g.add_edge(1, 3, 1, 1)
+m_g.add_edge(2, 3, 1, 1)
+m_g.add_edge(2, 4, 1, 1)
+m_g.add_edge(3, 4, 10, 1)
+
+my_path = dijkstra(m_g, 1, 4)
