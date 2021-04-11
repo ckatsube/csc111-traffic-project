@@ -6,7 +6,7 @@ shortest path between two points in the graph , which goes through a certain no.
 from __future__ import annotations
 
 from graph import load_graph, Graph
-from pathcalculator import get_shortest_map_and_graph
+from pathcalculator import get_shortest_map_and_graph, dijkstra
 from typing import Any, Optional
 
 
@@ -61,9 +61,22 @@ def get_path_weight(graph: Graph, path: list) -> float:
         s = s + graph.get_weight(path[i], path[i + 1])
     return s
 
+
+def only_2_points(graph: Graph, start: Any, end: Any) -> list:
+    """
+    This gives the shortest path between 2 points based on dijkstra's algorithm.
+    """
+    path = dijkstra(graph, start, end)
+    full_path = []
+    for vertex_item in path:
+        full_path.append(vertex_item)
+    return full_path
+
+
 # Sample Call
 # g = load_graph('data/chicago_dataset_1.csv')
 # end = 'Kinzie'
 # visitor = ['26th', '18TH', 'Indianapolis', 'Indiana', 'Michigan', 'Peterson', '75th', '96th']
 # start = '1550 West'
 # full_path = gets_original_gives_full_path(g, start, end, visitor)
+# path = only_2_points(g, start, end)
