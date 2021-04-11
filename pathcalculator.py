@@ -78,7 +78,7 @@ def get_shortest_map_and_graph(g: Graph, start: Any, end: Any, points: list) ->\
     """Return both the shortest map and graph according to get_shortest_map and _graph
     """
 
-    shortest_map = get_shortest_graph(g, start, end, points)
+    shortest_map = get_shortest_path_map(g, start, end, points)
     shortest_graph = convert_shortest_map_to_graph(shortest_map)
 
     return shortest_map, shortest_graph

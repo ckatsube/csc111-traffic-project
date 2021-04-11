@@ -53,6 +53,23 @@ class _Vertex:
             if u not in visited:
                 u.print_all_connected(visited)
 
+    def paths(self, item: Any, visited: set, curr_path: list, paths: list) -> None:
+        """Returns a list of all the paths between self and item."""
+
+        visited.add(self.item)
+        curr_path.append(self.item)
+
+        if self.item == item:
+            paths.append(list(curr_path))
+
+        else:
+            for neighbour in self.neighbours:
+                if neighbour.item not in visited:
+                    neighbour.paths(item, visited, curr_path, paths)
+
+        curr_path.pop()
+        visited.remove(self.item)
+
 
 class Graph:
     """
@@ -74,7 +91,7 @@ class Graph:
         """Add a weighted edge between the two vertices with the given items in this graph.
         The weight of each edge is the amount of time it takes to travel along the given edge(route)
         """
-        weight = float(speed) / float(length)
+        weight = float(length) / float(speed)
         if item1 in self._vertices and item2 in self._vertices:
             v1 = self._vertices[item1]
             v2 = self._vertices[item2]
@@ -103,6 +120,14 @@ class Graph:
             return True
         else:
             return False
+
+    def get_all_paths(self, item1: Any, item2: Any) -> list:
+        """Returns a list of all the paths from item1 to item2 and uses the paths vertex helper.
+        """
+        all_paths = []
+        v1 = self._vertices[item1]
+        v1.paths(item2, set(), [], all_paths)
+        return all_paths
 
     # temp function for visualization
     def to_networkx(self, max_vertices: int = 5000) -> nx.Graph:
@@ -279,3 +304,5 @@ def visualize_graph(graph: Graph,
         fig.show()
     else:
         fig.write_image(output_file)
+
+

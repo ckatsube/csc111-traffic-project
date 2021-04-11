@@ -5,9 +5,10 @@ shortest path between two points in the graph , which goes through a certain no.
 """
 from __future__ import annotations
 
-from graph import load_graph, Graph
 from pathcalculator import get_shortest_map_and_graph, dijkstra
 from typing import Any, Optional
+Graph = __import__("Graph & Node").Graph
+load_graph = __import__("Graph & Node").load_graph
 
 
 def gets_original_gives_full_path(graph: Graph, starting_point: Any, ending_point: Any,
