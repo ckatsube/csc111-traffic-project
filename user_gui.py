@@ -12,6 +12,13 @@ def get_input_handler_frame() -> Tk:
     return ifb.get_frame()
 
 
+def run_input_frame() -> None:
+    """Run the default the input frame using the default settings from get_input_handler_frame
+    """
+
+    get_input_handler_frame().mainloop()
+
+
 def _get_options() -> tuple[tuple, list[tuple]]:
     option_names = (
         "letter",
