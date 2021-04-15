@@ -64,11 +64,11 @@ def convert_shortest_map_to_graph(shortest_map: dict[Any, dict[Any, Path]]) -> G
     points = _get_all_points(shortest_map)
 
     for point in points:
-        shortest_graph.add_vertex(point)
+        shortest_graph.add_vertex(point, '0', '0')
 
     for point, end_points in shortest_map.items():
         for end_point, path in end_points.items():
-            shortest_graph.add_edge(point, end_point, path.get_path_weight(), 1)
+            shortest_graph.add_edge(point, end_point, 1, path.get_path_weight())
 
     return shortest_graph
 
@@ -78,7 +78,7 @@ def get_shortest_map_and_graph(g: Graph, start: Any, end: Any, points: list) ->\
     """Return both the shortest map and graph according to get_shortest_map and _graph
     """
 
-    shortest_map = get_shortest_graph(g, start, end, points)
+    shortest_map = get_shortest_path_map(g, start, end, points)
     shortest_graph = convert_shortest_map_to_graph(shortest_map)
 
     return shortest_map, shortest_graph

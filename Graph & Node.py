@@ -15,15 +15,18 @@ class _Vertex:
         - item: The name of street location.
         - neighbours: The vertices that are adjacent to this vertex, and their corresponding
             edge weights.
+        - lat_and_long: The latitude and longitude of the location.
     """
     item: Any
     neighbours: dict[_Vertex, Union[int, float]]  # vertex and weight
+    lat_and_long: tuple[float, float]
 
-    def __init__(self, item: Any) -> None:
+    def __init__(self, item: Any, latitude: str, longitude: str) -> None:
         """Initializing a new vertex.
         """
         self.item = item
         self.neighbours = {}
+        self.lat_and_long = (float(latitude), float(longitude))
 
     def check_connected(self, target_item: Any, visited: set[_Vertex]) -> bool:
         """Return whether this vertex is connected to a vertex corresponding to target_item,
@@ -53,6 +56,25 @@ class _Vertex:
             if u not in visited:
                 u.print_all_connected(visited)
 
+    def paths(self, item: Any, visited: set, curr_path: list, paths: list) -> None:
+        """Returns a list of all the paths between self and item. This function works recursively,
+        it works to find a path which ends on the target item and when it find that path it adds it
+        to the list of returned paths."""
+
+        visited.add(self.item)
+        curr_path.append(self.item)
+
+        if self.item == item:
+            paths.append(list(curr_path))
+
+        else:
+            for neighbour in self.neighbours:
+                if neighbour.item not in visited:
+                    neighbour.paths(item, visited, curr_path, paths)
+
+        curr_path.pop()
+        visited.remove(self.item)
+
 
 class Graph:
     """
@@ -64,17 +86,17 @@ class Graph:
         """Initialising empty graph"""
         self._vertices = {}
 
-    def add_vertex(self, item: Any) -> None:
+    def add_vertex(self, item: Any, latitude: str, longitude: str) -> None:
         """Add a vertex with the given Street location.
         """
         if item not in self._vertices:
-            self._vertices[item] = _Vertex(item)
+            self._vertices[item] = _Vertex(item, latitude, longitude)
 
     def add_edge(self, item1: Any, item2: Any, speed: str, length: str) -> None:
         """Add a weighted edge between the two vertices with the given items in this graph.
         The weight of each edge is the amount of time it takes to travel along the given edge(route)
         """
-        weight = float(speed) / float(length)
+        weight = float(length) / float(speed)
         if item1 in self._vertices and item2 in self._vertices:
             v1 = self._vertices[item1]
             v2 = self._vertices[item2]
@@ -104,28 +126,13 @@ class Graph:
         else:
             return False
 
-    # temp function for visualization
-    def to_networkx(self, max_vertices: int = 5000) -> nx.Graph:
-        """Convert this graph into a networkx Graph.
-        max_vertices specifies the maximum number of vertices that can appear in the graph.
-        (This is necessary to limit the visualization output for large graphs.)
-        Note that this method is provided for you, and you shouldn't change it.
+    def get_all_paths(self, item1: Any, item2: Any) -> list:
+        """Returns a list of all the paths from item1 to item2 and uses the paths vertex helper.
         """
-        graph_nx = nx.Graph()
-        for v in self._vertices.values():
-            graph_nx.add_node(v.item)
-
-            for u in v.neighbours:
-                if graph_nx.number_of_nodes() < max_vertices:
-                    graph_nx.add_node(u.item)
-
-                if u.item in graph_nx.nodes:
-                    graph_nx.add_edge(v.item, u.item)
-
-            if graph_nx.number_of_nodes() >= max_vertices:
-                break
-
-        return graph_nx
+        all_paths = []
+        v1 = self._vertices[item1]
+        v1.paths(item2, set(), [], all_paths)
+        return all_paths
 
     def connected(self, item1: Any, item2: Any) -> bool:
         """Return whether item1 and item2 are connected vertices
@@ -177,12 +184,17 @@ class Graph:
         else:
             raise ValueError
 
+    def get_all_lat_long(self, list: Any) -> tuple:
+        """Return te latitude and longitude of the vertices.
+        """
+        list_of_latitudes = []
+        list_of_longitudes = []
 
-def traffic_heuristic(item1, item2) -> float:
-    """
-    Returns the weight between two locations using the traffic heuristic.
-    To be coded later.
-    """
+        for location in list:
+            list_of_latitudes.append(self._vertices[location].lat_and_long[0])
+            list_of_longitudes.append(self._vertices[location].lat_and_long[1])
+
+        return (list_of_latitudes, list_of_longitudes)
 
 
 def load_graph(chicago_traffic_file: str) -> Graph:
@@ -203,79 +215,13 @@ def load_graph(chicago_traffic_file: str) -> Graph:
             if row[10] == '17' and row[11] == '4' and row[12] == '3':  # Only reads data for 5PM
                 # Thursdays in March
                 if not graph.check_in(row[6]):
-                    graph.add_vertex(row[6])  # adding starting vertex if it's not
+                    graph.add_vertex(row[6], row[13], row[14])  # adding starting vertex if it's not
                     # in the graph already
                 if not graph.check_in(row[7]):
-                    graph.add_vertex(row[7])  # adding ending vertex if it's not
+                    graph.add_vertex(row[7], row[15], row[16])  # adding ending vertex if it's not
                     # in the graph already
                 graph.add_edge(row[6], row[7], row[3],
                                row[8])  # represents a route from starting to
                 # ending point
 
     return graph
-
-
-from plotly.graph_objs import Scatter, Figure
-
-LINE_COLOUR = 'rgb(210,210,210)'
-VERTEX_BORDER_COLOUR = 'rgb(50, 50, 50)'
-
-
-def visualize_graph(graph: Graph,
-                    layout: str = 'spring_layout',
-                    max_vertices: int = 5000,
-                    output_file: str = '') -> None:
-    """Use plotly and networkx to visualize the given graph.
-    Optional arguments:
-        - layout: which graph layout algorithm to use
-        - max_vertices: the maximum number of vertices that can appear in the graph
-        - output_file: a filename to save the plotly image to (rather than displaying
-            in your web browser)
-    """
-    graph_nx = graph.to_networkx(max_vertices)
-
-    pos = getattr(nx, layout)(graph_nx)
-
-    x_values = [pos[k][0] for k in graph_nx.nodes]
-    y_values = [pos[k][1] for k in graph_nx.nodes]
-    labels = list(graph_nx.nodes)
-    kinds = [graph_nx.nodes[k] for k in graph_nx.nodes]
-
-    # colours = [BOOK_COLOUR if kind == 'book' else USER_COLOUR for kind in kinds]
-
-    x_edges = []
-    y_edges = []
-    for edge in graph_nx.edges:
-        x_edges += [pos[edge[0]][0], pos[edge[1]][0], None]
-        y_edges += [pos[edge[0]][1], pos[edge[1]][1], None]
-
-    trace3 = Scatter(x=x_edges,
-                     y=y_edges,
-                     mode='lines',
-                     name='edges',
-                     line=dict(color=LINE_COLOUR, width=1),
-                     hoverinfo='none',
-                     )
-    trace4 = Scatter(x=x_values,
-                     y=y_values,
-                     mode='markers',
-                     name='nodes',
-                     marker=dict(symbol='circle-dot',
-                                 size=5,
-                                 line=dict(color=VERTEX_BORDER_COLOUR, width=0.5)
-                                 ),
-                     text=labels,
-                     hovertemplate='%{text}',
-                     hoverlabel={'namelength': 0}
-                     )
-
-    data1 = [trace3, trace4]
-    fig = Figure(data=data1)
-    fig.update_layout({'showlegend': False})
-    fig.update_xaxes(showgrid=False, zeroline=False, visible=False)
-    fig.update_yaxes(showgrid=False, zeroline=False, visible=False)
-
-    if output_file == '':
-        fig.show()
-    else:
-        fig.write_image(output_file)
