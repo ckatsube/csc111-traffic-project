@@ -317,10 +317,11 @@ class Graph:
 def load_graph(chicago_traffic_file: str) -> Graph:
     """Return a graph corresponding to the given dataset.
     We return a graph connecting 'from' and 'to' streets in each row
-    row[5] refers to the starting point (street) and row[6] refers to the ending point (street).
-    row[13] refers to the day of the week and row[14] refers to the month.
-    For now, I am filtering rows and only reading ones for Thursday 5PM in March.
-    row[2] refers to the speed and row [7] refers to the length of the route. We compute the
+    row[6] refers to the starting point (street) and row[7] refers to the ending point (street).
+    row[11] refers to the day of the week and row[12] refers to the month and
+    row[10] refers to the time
+    For now, we are filtering rows and only reading ones for Thursday 5PM in March.
+    row[3] refers to the speed and row [8] refers to the length of the route. We compute the
     weighted portion of the vertex by calculating length/speed to obtain the time taken between the
     starting and ending points.
     """
