@@ -1,4 +1,4 @@
-# CSC111 Winter 2021: Python libraries we'll be using this semester.
+# CSC111 Winter 2021: Python libraries used in our projects.
 
 # Testing and code checking
 python-ta~=1.6.3
