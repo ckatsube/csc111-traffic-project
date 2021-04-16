@@ -319,7 +319,9 @@ def load_graph(chicago_traffic_file: str) -> Graph:
     We return a graph connecting 'from' and 'to' streets in each row
     row[6] refers to the starting point (street) and row[7] refers to the ending point (street).
     row[11] refers to the day of the week and row[12] refers to the month and
-    row[10] refers to the time
+    row[10] refers to the time.
+    row[13] and row[14] refer to the starting latitude and longitude coordinates respectively.
+    row[15] and row[16] refer to the latitude and longitude coordinates of the end point.
     For now, we are filtering rows and only reading ones for Thursday 5PM in March.
     row[3] refers to the speed and row [8] refers to the length of the route. We compute the
     weighted portion of the vertex by calculating length/speed to obtain the time taken between the
