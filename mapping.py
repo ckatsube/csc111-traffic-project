@@ -32,6 +32,8 @@ def mapping_on_maps_multiple(graph: Graph, path: list) -> None:
 
     x, y = graph.get_all_lat_long(path)  # To receive the latitude and longitude for all the
     # different points in our path.
+    z = x[1:-1]
+    w = y[1:-1]
 
     gmap = gmplot.GoogleMapPlotter(41.8781, -87.6298, 13)  # Plots the map frm the center of
     # chicago.
@@ -39,7 +41,7 @@ def mapping_on_maps_multiple(graph: Graph, path: list) -> None:
     gmap.marker(r[1], t[1], color='black', title=path[-1])  # locations.
 
     # Scatter the different points in our path on the google map.
-    gmap.scatter(x, y, color='blue', size=80, marker=False)
+    gmap.scatter(z, w, color='blue', size=80, marker=True, title=path[1:-1])
 
     # Draw lines connecting the different co-ordinates or points in our google map.
     gmap.plot(x, y, '#6495ED', edge_width=2.0)
@@ -62,6 +64,8 @@ def mapping_on_maps_singular(graph: Graph, path: list) -> None:
 
     x, y = graph.get_all_lat_long(path)  # To receive the latitude and longitude for all the
     # different points in our path.
+    z = x[1:-1]
+    w = y[1:-1]
 
     gmap1 = gmplot.GoogleMapPlotter(41.8781, -87.6298, 13)  # Plots the map frm the center of
     # chicago.
@@ -70,8 +74,8 @@ def mapping_on_maps_singular(graph: Graph, path: list) -> None:
     gmap1.marker(r[1], t[1], color='black', title=path[-1])  # locations.
 
     # Scatter the different points in our path on the google map.
-    gmap1.scatter(x, y, color='blue',
-                  size=80, marker=False)
+    gmap1.scatter(z, w, color='blue',
+                  size=80, marker=True, title=path[1:-1])
 
     # Draw lines connecting the different co-ordinates or points in our google map.
     gmap1.plot(x, y,
