@@ -20,8 +20,8 @@ from abc import ABC
 from typing import Any, Iterable, Iterator
 
 import heapq
-
-Graph = __import__("Graph & Node").Graph
+from graph import Graph
+# Graph = __import__("Graph & Node").Graph
 
 #############################################################################
 # PUBLIC INTERFACE
@@ -252,7 +252,7 @@ class _PathNode(_Node):
     _weight: float
     _size: int
 
-    def __init__(self, item: Any, weight: float, parent: _PathNode = _NullPathNode()):
+    def __init__(self, item: Any, weight: float, parent: _PathNode = _NullPathNode()) -> None:
         self._next = parent
         self._item = item
 
@@ -303,7 +303,7 @@ class _ItemIterator(_PathIterator[Any]):
 
     _wrapped_iterator: _NodeIterator
 
-    def __init__(self, initial_node: _Node):
+    def __init__(self, initial_node: _Node) -> None:
         self._wrapped_iterator = _NodeIterator(initial_node)
 
     def __next__(self) -> Any:
@@ -319,7 +319,7 @@ class _NodeIterator(_PathIterator[_Node]):
 
     _current_node: _Node
 
-    def __init__(self, initial_node: _Node):
+    def __init__(self, initial_node: _Node) -> None:
         self._current_node = initial_node
 
     def __next__(self) -> _Node:
@@ -328,4 +328,16 @@ class _NodeIterator(_PathIterator[_Node]):
         return cur
 
 
+if __name__ == '__main__':
+    import doctest
+    doctest.testmod()
 
+    import python_ta
+    python_ta.check_all(config={
+        'max-line-length': 100,
+        'disable': ['E1136', 'E9971'],
+        'extra-imports': ['heapq', 'Graph & Node', 'abc'],
+        'allowed-io': [],
+        'max-nested-blocks': 5
+
+    })

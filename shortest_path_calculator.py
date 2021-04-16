@@ -17,8 +17,9 @@ This file is Copyright (c) 2021 Aryaman Modi, Craig Katsube, Garv Sood, Kaartik 
 from __future__ import annotations
 from typing import Any, Optional
 from pathcalculator import get_shortest_map_and_graph, dijkstra
-Graph = __import__("Graph & Node").Graph
-load_graph = __import__("Graph & Node").load_graph
+from graph import load_graph, Graph
+# Graph = __import__("Graph & Node").Graph
+# load_graph = __import__("Graph & Node").load_graph
 
 
 def gets_original_gives_full_path(graph: Graph, starting_point: Any, ending_point: Any,

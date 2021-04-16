@@ -14,7 +14,8 @@ This file is Copyright (c) 2021 Aryaman Modi, Craig Katsube, Garv Sood, Kaartik 
 
 import webbrowser
 import gmplot
-Graph = __import__("Graph & Node").Graph
+from graph import load_graph, Graph
+# Graph = __import__("Graph & Node").Graph
 
 
 def mapping_on_maps_multiple(graph: Graph, path: list) -> None:
