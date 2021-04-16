@@ -158,7 +158,7 @@ class Graph:
         if item not in self._vertices:
             self._vertices[item] = _Vertex(item, latitude, longitude)
 
-    def add_edge(self, item1: Any, item2: Any, speed: str, length: str) -> None:
+    def add_edge(self, item1: Any, item2: Any, speed: Any, length: Any) -> None:
         """Add a weighted edge between the two vertices with the given items in this graph.
         The weight of each edge is the amount of time it takes to travel along the given edge(route)
         """

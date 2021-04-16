@@ -14,7 +14,7 @@ This file is Copyright (c) 2021 Aryaman Modi, Craig Katsube, Garv Sood, Kaartik 
 
 import webbrowser
 import gmplot
-from graph import load_graph, Graph
+from graph import Graph
 # Graph = __import__("Graph & Node").Graph
 
 
@@ -89,7 +89,7 @@ if __name__ == '__main__':
     python_ta.check_all(config={
         'max-line-length': 100,
         'disable': ['E1136'],
-        'extra-imports': ['gmplot', 'webbrowser', 'Graph & Node'],
+        'extra-imports': ['gmplot', 'webbrowser', 'graph'],
         'allowed-io': [],
         'max-nested-blocks': 5
 

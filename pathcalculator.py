@@ -336,7 +336,7 @@ if __name__ == '__main__':
     python_ta.check_all(config={
         'max-line-length': 100,
         'disable': ['E1136', 'E9971'],
-        'extra-imports': ['heapq', 'Graph & Node', 'abc'],
+        'extra-imports': ['heapq', 'graph', 'abc'],
         'allowed-io': [],
         'max-nested-blocks': 5
 

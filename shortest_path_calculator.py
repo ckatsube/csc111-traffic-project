@@ -103,7 +103,7 @@ if __name__ == '__main__':
     python_ta.check_all(config={
         'max-line-length': 100,
         'disable': ['E1136'],
-        'extra-imports': ['pathcalculator', 'Graph & Node'],
+        'extra-imports': ['pathcalculator', 'graph'],
         'allowed-io': [],
         'max-nested-blocks': 5
 
