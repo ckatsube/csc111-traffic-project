@@ -1,12 +1,22 @@
 """
-Functions which make use of the graphs and maps generated using dijkstra's algorithm to return the
-shortest path between two points in the graph , which goes through a certain no. of specified points
-.
+CSC111 Project: shortest_path_calculator.py
+
+Module Description
+==================
+
+This module contains functions which make use of the graphs and maps generated using dijkstra's
+algorithm to return the shortest path between two points in the graph , which goes through a certain
+no. of specified points.
+
+Copyright and Usage Information
+===============================
+This file is Copyright (c) 2021 Aryaman Modi, Craig Katsube, Garv Sood, Kaartik Issar
+
+
 """
 from __future__ import annotations
-
-from pathcalculator import get_shortest_map_and_graph, dijkstra
 from typing import Any, Optional
+from pathcalculator import get_shortest_map_and_graph, dijkstra
 Graph = __import__("Graph & Node").Graph
 load_graph = __import__("Graph & Node").load_graph
 
@@ -82,3 +92,18 @@ def only_2_points(graph: Graph, start: Any, end: Any) -> list:
 # start = '1550 West'
 # full_path = gets_original_gives_full_path(g, start, end, visitor)
 # path = only_2_points(g, start, end)
+
+
+if __name__ == '__main__':
+    import doctest
+    doctest.testmod()
+
+    import python_ta
+    python_ta.check_all(config={
+        'max-line-length': 100,
+        'disable': ['E1136'],
+        'extra-imports': ['pathcalculator', 'Graph & Node'],
+        'allowed-io': [],
+        'max-nested-blocks': 5
+
+    })

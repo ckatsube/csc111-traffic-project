@@ -1,8 +1,19 @@
 """
-Mapping using gmplot, pip install gmplot before doing this.
+CSC111 Project: mapping.py
+
+Module Description
+==================
+The following module utilizes the gmplot module to scatter the various points in our shortest paths
+and then draw lines showing which point is connected to which point, or how we can travel from one
+point to the next.
+
+Copyright and Usage Information
+===============================
+This file is Copyright (c) 2021 Aryaman Modi, Craig Katsube, Garv Sood, Kaartik Issar
 """
-import gmplot
+
 import webbrowser
+import gmplot
 Graph = __import__("Graph & Node").Graph
 
 
@@ -67,3 +78,18 @@ def mapping_on_maps_singular(graph: Graph, path: list) -> None:
 
     gmap1.draw('map2.html')
     webbrowser.open('map2.html')
+
+
+if __name__ == '__main__':
+    import doctest
+    doctest.testmod()
+
+    import python_ta
+    python_ta.check_all(config={
+        'max-line-length': 100,
+        'disable': ['E1136'],
+        'extra-imports': ['gmplot', 'webbrowser', 'Graph & Node'],
+        'allowed-io': [],
+        'max-nested-blocks': 5
+
+    })

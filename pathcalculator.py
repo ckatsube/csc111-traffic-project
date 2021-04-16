@@ -1,4 +1,17 @@
-"""Module for containing methods and classes related to calculating the shortest path
+"""
+CSC111 Project: pathcalculator.py
+
+Module Description
+==================
+
+Module which contains the methods and classes related to calculating the shortest path. We use the
+heapq module in the implementation of our functions. The main algorithm used for calculating the
+shortest path is Dijkstra's Algorithm.
+
+Copyright and Usage Information
+===============================
+This file is Copyright (c) 2021 Aryaman Modi, Craig Katsube, Garv Sood, Kaartik Issar
+
 """
 
 from __future__ import annotations
@@ -313,3 +326,6 @@ class _NodeIterator(_PathIterator[_Node]):
         cur = self._current_node
         self._current_node = self._current_node.get_next()
         return cur
+
+
+
