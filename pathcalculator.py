@@ -21,7 +21,6 @@ from typing import Any, Iterable, Iterator
 
 import heapq
 from graph import Graph
-# Graph = __import__("Graph & Node").Graph
 
 #############################################################################
 # PUBLIC INTERFACE

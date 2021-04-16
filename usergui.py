@@ -1,8 +1,8 @@
 """I/O devices for interacting with the shortest path program
 """
 
-from tkinter import Button, Frame, Label, Tk, Widget
-from typing import Any, Callable
+from tkinter import Button, Frame, Label, Tk
+from typing import Callable
 
 from mediatorbuilder import MenuMediatorBuilder, NullMediatorBuilder, MediatorBuilder
 
