@@ -363,6 +363,9 @@ class Graph:
             v1 = self._vertices[item]
             return v1
 
+        else:
+            raise ValueError
+
 
 def load_graph(chicago_traffic_file: str) -> Graph:
     """Return a graph corresponding to the given dataset.
