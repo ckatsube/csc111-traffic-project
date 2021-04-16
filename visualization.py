@@ -16,7 +16,7 @@ This file is Copyright (c) 2021 Kaartik Issar, Aryaman Modi, Craig Katsube and G
 
 
 import matplotlib.pyplot as plt
-from graph import load_graph, Graph
+from graph import Graph
 
 # Graph = __import__("Graph & Node").Graph
 # load_graph = __import__("Graph & Node").load_graph
@@ -37,7 +37,7 @@ def convert_to_tuple_points(lst1: list, lst2: list) -> list:
     return new_lst
 
 
-def visualise(lst: list, g: Graph):
+def visualise(lst: list, g: Graph) -> None:
     """
     Give a visual representation of the given path on the map of Chicago City.
     """
@@ -45,7 +45,7 @@ def visualise(lst: list, g: Graph):
 
     # endpoints obtained from computation in datatransformation.py
     box = (41.65900629, 42.0128288601, -87.535052, -87.8367650119)
-    fig, ax = plt.subplots(figsize=(8, 7))
+    _, ax = plt.subplots(figsize=(8, 7))
 
     lst1, lst2 = g.get_all_lat_long(lst)
     lst_lat_long = convert_to_tuple_points(lst1, lst2)
@@ -58,3 +58,18 @@ def visualise(lst: list, g: Graph):
     for i, txt in enumerate(lst):
         ax.annotate(txt + ' ,' + str(i), (lst_lat_long[i][0], lst_lat_long[i][1]))
     ax.imshow(map_img, zorder=0, extent=box, aspect='equal')
+
+
+if __name__ == '__main__':
+    import doctest
+    doctest.testmod()
+
+    import python_ta
+    python_ta.check_all(config={
+        'max-line-length': 100,
+        'disable': ['E1136'],
+        'extra-imports': ['matplotlib.pyplot', 'graph'],
+        'allowed-io': [],
+        'max-nested-blocks': 5
+
+    })
