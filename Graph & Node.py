@@ -335,7 +335,7 @@ class Graph:
         else:
             raise ValueError
 
-    def get_all_lat_long(self, list: Any) -> tuple:
+    def get_all_lat_long(self, lst: Any) -> tuple:
         """Return the latitude and longitude of the vertices.
         >>> g = Graph()
         >>> g.add_vertex("Bay Road", "12.02", "14.24") # street name with the latitude and longitude
@@ -349,7 +349,7 @@ class Graph:
         list_of_latitudes = []
         list_of_longitudes = []
 
-        for location in list:
+        for location in lst:
             list_of_latitudes.append(self._vertices[location].lat_and_long[0])
             list_of_longitudes.append(self._vertices[location].lat_and_long[1])
 
@@ -402,3 +402,12 @@ def load_graph(chicago_traffic_file: str) -> Graph:
 if __name__ == '__main__':
     import doctest
     doctest.testmod()
+
+    # import python_ta
+    # python_ta.check_all(config={
+    #     'max-line-length': 100,
+    #     'disable': ['E1136'],
+    #     'extra-imports': ['csv', 'networkx'],
+    #     'allowed-io': ['load_graph', 'print_all_connected'],
+    #     'max-nested-blocks': 4
+    # })
