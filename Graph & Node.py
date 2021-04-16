@@ -1,7 +1,22 @@
+"""CSC111 Project: Graph & Node.py
+Module Description
+==================
+The following code initialises the Vertex and Graph class, and also defines basic functions that we
+would use throughout our project. In addition to this it also has the function that constructs a
+graph from a given dataset
+
+Some functions present in the Vertex and Graph classes have been provided to us by Professor David
+Liu during our CSC111 lectures and the Amazon Book Recommendations assignment (Assignment 3)
+All other functions have been made by Kaartik Isaar, Aryaman Modi, Craig Katsube and Garv Sood
+
+Copyright and Usage Information
+===============================
+This file is Copyright (c) 2021 Kaartik Isaar, Aryaman Modi, Craig Katsube and Garv Sood
+"""
+
 from __future__ import annotations
 from typing import Any, Union
 import csv
-import networkx as nx
 
 
 # The following code initialises the Vertex and Graph class, and also defines basic functions
@@ -32,6 +47,7 @@ class _Vertex:
         """Return whether this vertex is connected to a vertex corresponding to target_item,
         by a path that DOES NOT use any vertex in visited.
         """
+
         if self.item == target_item:
             return True
         else:
@@ -107,6 +123,18 @@ class Graph:
     def adjacent(self, item1: Any, item2: Any) -> bool:
         """
         Return if the following two locations are adjacent.
+        >>> g = Graph()
+        >>> g.add_vertex("Bay Road", "12", "14")  # street name with the latitude and longitude
+        >>> g.add_vertex("22nd", "11", "13")
+        >>> g.add_vertex("Chicago Square", "10", "14")
+        >>> g.add_vertex("23rd", "1", "14")
+        >>> g.add_vertex("Avenue", "2", "14")
+        >>> g.add_edge("Bay Road", "22nd", "34", "23")  # 2 items that need to be connected along with speed and length values
+        >>> g.add_edge("Chicago Square", "22nd", "33", "22")
+        >>> g.adjacent("Bay Road", "22nd")
+        True
+        >>> g.adjacent("Bay Road", "Chicago Square")
+        False
         """
         if item1 in self._vertices and item2 in self._vertices:
             v1 = self._vertices[item1]
@@ -120,6 +148,15 @@ class Graph:
     def check_in(self, user: str) -> bool:
         """
         Helper for load review graph. Checks if vertex does not already exist
+        >>> g = Graph()
+        >>> g.add_vertex("Madison", "12.55", "14") # name of street with its coordinates
+        >>> g.add_vertex("21st", "2", "4.65")
+        >>> g.add_vertex("501st", "12", "14.78")
+        >>> g.add_vertex("Avenue", "12.3", "14.06")
+        >>> g.check_in("21st")
+        True
+        >>> g.check_in("City Center")
+        False
         """
         if user in self._vertices:
             return True
@@ -128,6 +165,19 @@ class Graph:
 
     def get_all_paths(self, item1: Any, item2: Any) -> list:
         """Returns a list of all the paths from item1 to item2 and uses the paths vertex helper.
+        >>> g = Graph()
+        >>> g.add_vertex("Bay Road", "12", "14")  # street name with the latitude and longitude
+        >>> g.add_vertex("22nd", "11", "13")
+        >>> g.add_vertex("Chicago Square", "10", "14")
+        >>> g.add_vertex("23rd", "1", "14")
+        >>> g.add_vertex("Avenue", "2", "14")
+        >>> g.add_edge("Bay Road", "22nd", "34", "23")  # 2 items that need to be connected along with speed and length values
+        >>> g.add_edge("Chicago Square", "22nd", "33", "22")
+        >>> g.add_edge("Chicago Square", "Avenue", "31", "2")
+        >>> g.add_edge("Bay Road", "Avenue", "39", "29")
+        >>> g.add_edge("Avenue", "22nd", "3", "2")
+        >>> g.get_all_paths("Bay Road", "Avenue")
+        [['Bay Road', '22nd', 'Chicago Square', 'Avenue'], ['Bay Road', '22nd', 'Avenue'], ['Bay Road', 'Avenue']]
         """
         all_paths = []
         v1 = self._vertices[item1]
@@ -139,6 +189,17 @@ class Graph:
         in this graph.
         Return False if item1 or item2 do not appear as vertices
         in this graph.
+        >>> g = Graph()
+        >>> g.add_vertex("Bay Road", "12", "14")  # street name with the latitude and longitude
+        >>> g.add_vertex("22nd", "11", "13")
+        >>> g.add_vertex("Chicago Square", "10", "14")
+        >>> g.add_vertex("23rd", "1", "14")
+        >>> g.add_vertex("Avenue", "2", "14")
+        >>> g.add_edge("Bay Road", "22nd", "34", "23")
+        >>> g.add_edge("Chicago Square", "22nd", "33", "22")
+        >>> g.add_edge("Chicago Square", "Avenue", "31", "2")
+        >>> g.connected("Chicago Square", "Bay Road")
+        True
         """
         if item1 in self._vertices and item2 in self._vertices:
             v1 = self._vertices[item1]
@@ -150,6 +211,20 @@ class Graph:
     def in_cycle(self, item: Any) -> bool:
         """Return whether the given item is in a cycle in this graph.
         Return False if item does not appears as a vertex in this graph.
+        >>> g = Graph()
+        >>> g.add_vertex("Bay Road", "12", "14")  # street name with the latitude and longitude
+        >>> g.add_vertex("22nd", "11", "13")
+        >>> g.add_vertex("Chicago Square", "10", "14")
+        >>> g.add_vertex("23rd", "1", "14")
+        >>> g.add_vertex("Avenue", "2", "14")
+        >>> g.add_edge("Bay Road", "22nd", "34", "23")
+        >>> g.add_edge("Chicago Square", "22nd", "33", "22")
+        >>> g.add_edge("Bay Road", "Avenue", "39", "29")
+        >>> g.add_edge("Avenue", "22nd", "3", "2")
+        >>> g.in_cycle("Bay Road")
+        True
+        >>> g.in_cycle("Chicago Square")
+        False
         """
         if item not in self._vertices:
             return False
@@ -161,9 +236,22 @@ class Graph:
             return False
 
     def get_weight(self, item1: Any, item2: Any) -> Union[int, float]:
-        """Return the weight of the edge between the given items.
+        """Return the weight (time taken) of the edge between the given items (streets).
         Precondition:
             - item1 and item2 are vertices in this graph
+        >>> g = Graph()
+        >>> g.add_vertex("Bay Road", "12", "14")  # street name with the latitude and longitude
+        >>> g.add_vertex("22nd", "11", "13")
+        >>> g.add_vertex("Chicago Square", "10", "14")
+        >>> g.add_vertex("23rd", "1", "14")
+        >>> g.add_vertex("Avenue", "2", "14")
+        >>> g.add_edge("Bay Road", "22nd", "34", "23")
+        >>> g.add_edge("Chicago Square", "22nd", "33", "22")
+        >>> g.add_edge("Chicago Square", "Avenue", "31", "2")
+        >>> g.add_edge("Bay Road", "Avenue", "39", "29")
+        >>> g.add_edge("Avenue", "22nd", "3", "2")
+        >>> g.get_weight("Bay Road", "Avenue")  # weight (time taken) between these 2 points
+        0.7435897435897436
         """
         v1 = self._vertices[item1]
         v2 = self._vertices[item2]
@@ -171,12 +259,33 @@ class Graph:
 
     def get_all_vertices(self) -> set:
         """Return a set of all vertex items in this graph.
+        >>> g = Graph()
+        >>> g.add_vertex("Bay Road", "12", "14")  # street name with the latitude and longitude
+        >>> g.add_vertex("22nd", "11", "13")
+        >>> g.add_vertex("Chicago Square", "10", "14")
+        >>> g.add_vertex("23rd", "1", "14")
+        >>> g.add_vertex("Avenue", "2", "14")
+        >>> g.get_all_vertices() == {'Avenue', 'Chicago Square', 'Bay Road', '22nd', '23rd'}
+        True
         """
         return set(self._vertices.keys())
 
     def get_neighbours(self, item: Any) -> set:
         """Return a set of the neighbours of the given item.
         Raise a ValueError if item does not appear as a vertex in this graph.
+        >>> g = Graph()
+        >>> g.add_vertex("Bay Road", "12", "14")  # street name with the latitude and longitude
+        >>> g.add_vertex("22nd", "11", "13")
+        >>> g.add_vertex("Chicago Square", "10", "14")
+        >>> g.add_vertex("23rd", "1", "14")
+        >>> g.add_vertex("Avenue", "2", "14")
+        >>> g.add_edge("Bay Road", "22nd", "34", "23")
+        >>> g.add_edge("Chicago Square", "22nd", "33", "22")
+        >>> g.add_edge("Chicago Square", "Avenue", "31", "2")
+        >>> g.add_edge("Bay Road", "Avenue", "39", "29")
+        >>> vertices = g.get_neighbours("Bay Road")
+        >>> {v.item for v in vertices} == {"22nd", "Avenue"}
+        True
         """
         if item in self._vertices:
             v = self._vertices[item]
@@ -185,7 +294,15 @@ class Graph:
             raise ValueError
 
     def get_all_lat_long(self, list: Any) -> tuple:
-        """Return te latitude and longitude of the vertices.
+        """Return the latitude and longitude of the vertices.
+        >>> g = Graph()
+        >>> g.add_vertex("Bay Road", "12.02", "14.24") # street name with the latitude and longitude
+        >>> g.add_vertex("22nd", "11.43", "13.75")
+        >>> g.add_vertex("Chicago Square", "10.0", "14.56")
+        >>> g.add_vertex("23rd", "1.55", "14.65")
+        >>> g.add_vertex("Avenue", "2.66", "14.23")
+        >>> g.get_all_lat_long(["Chicago Square", "Avenue", "23rd"])
+        ([10.0, 2.66, 1.55], [14.56, 14.23, 14.65])
         """
         list_of_latitudes = []
         list_of_longitudes = []
@@ -221,7 +338,11 @@ def load_graph(chicago_traffic_file: str) -> Graph:
                     graph.add_vertex(row[7], row[15], row[16])  # adding ending vertex if it's not
                     # in the graph already
                 graph.add_edge(row[6], row[7], row[3],
-                               row[8])  # represents a route from starting to
-                # ending point
+                               row[8])  # represents a route from starting to the ending point
 
     return graph
+
+
+if __name__ == '__main__':
+    import doctest
+    doctest.testmod()
