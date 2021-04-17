@@ -16,8 +16,12 @@ from typing import Any, Callable
 class MediatorComponent:
     """Interface for WidgetMediator components"""
 
-    def get_selection(self) -> Any:
+    def get_selected(self) -> Any:
         """Return the current selection(s) of this component"""
+        raise NotImplementedError
+
+    def set_selection(self, data: list) -> None:
+        """Sets the selection of this component to the specified data"""
         raise NotImplementedError
 
     def reset_selection(self) -> None:
@@ -63,13 +67,33 @@ class OptionMenuComponent(MediatorComponent):
         self._var = Variable()
         self._parent = parent
         self._mediator = mediator
-        self._om = OptionMenu(parent, self._var, "", *data,
-                              command=lambda _: mediator.update_options())
+        self._om = OptionMenu(parent, self._var, "", *sorted({obj for inner in data for obj in inner}),
+                              command=lambda _: mediator.update_selection(()))
         self._data = data
 
     def reset_selection(self) -> None:
         """Sets the option menu variable to an empty string"""
         self._var.set("")
+
+    def set_selection(self, data: list) -> None:
+        """Sets the OptionMenu options to data"""
+        menu = self._om["menu"]
+
+        _delete_menu_options(menu)
+
+        def click_command(variable: Variable, opt: Any) -> Callable:
+            """Return the command to be called when clicking an option item"""
+
+            def wrapper() -> None:
+                """Function called when clicking an option item"""
+                variable.set(opt)
+                self._mediator.update_selection(())
+
+            return wrapper
+
+        menu.add_command(label="", command=click_command(self._var, ""))
+        for option in data:
+            menu.add_command(label=option, command=click_command(self._var, option))
 
     def get_widget(self) -> Widget:
         """Return a list containing this OptionMenu"""
@@ -93,7 +117,7 @@ class OptionMenuComponent(MediatorComponent):
                 if any(self._data[col][row] == value for col in range(len(self._data))):
                     return {row}
 
-    def get_selection(self) -> Any:
+    def get_selected(self) -> Any:
         """Return the current variable's value"""
         return self._var.get()
 
@@ -104,27 +128,15 @@ class OptionMenuComponent(MediatorComponent):
         Precondition:
             - all(0 <= row < len(self._data) for all row in filtered_option_rows)
         """
-        menu = self._om["menu"]
-        start, end = 0, "end"
+        return
 
-        menu.delete(start, end)
 
-        options = sorted({self._data[col][row]
-                          for row in filtered_option_rows for col in range(len(self._data))})
+def _delete_menu_options(om: OptionMenu) -> None:
+    """Deletes all items/commands from the OptionMenu"""
+    menu = om["menu"]
 
-        def click_command(variable: Variable, opt: Any) -> Callable:
-            """Return the command to be called when clicking an option item"""
-
-            def wrapper() -> None:
-                """Function called when clicking an option item"""
-                variable.set(opt)
-                self._mediator.update_options()
-
-            return wrapper
-
-        menu.add_command(label="", command=click_command(self._var, ""))
-        for option in options:
-            menu.add_command(label=option, command=click_command(self._var, option))
+    start, end = 0, "end"
+    menu.delete(start, end)
 
 
 class OptionListComponent(MediatorComponent, Frame):
@@ -173,7 +185,7 @@ class OptionListComponent(MediatorComponent, Frame):
         om = omc.get_widget()
         om.pack(anchor="n")
 
-        self._mediator.update_options()
+        self._mediator.update_selection(())
 
     def remove_option_menu(self) -> None:
         """Removes an OptionMenu from the OptionListComponent"""
@@ -190,6 +202,11 @@ class OptionListComponent(MediatorComponent, Frame):
         while len(self._menu_components) > 1:
             self.remove_option_menu()
 
+    def set_selection(self, data: list) -> None:
+        """Restricts the selection of all children OptionMenus to the same data"""
+        for om in self._menu_components:
+            om.set_selection(data)
+
     def get_widget(self) -> Widget:
         """Return self which is the Frame composed of all the internal input menus"""
         return self
@@ -205,15 +222,15 @@ class OptionListComponent(MediatorComponent, Frame):
 
         Return a set of all indices if the value is an empty string"""
 
-        if all(value == "" for value in self.get_selection()):
+        if all(value == "" for value in self.get_selected()):
             return {i for i in range(0, len(self._data[0]))}
         else:
             selected_rows = (om.get_selected_rows() for om in self._menu_components)
             return set.union(*selected_rows)
 
-    def get_selection(self) -> Any:
+    def get_selected(self) -> Any:
         """Return the current variable's value"""
-        return tuple(om.get_selection() for om in self._menu_components)
+        return tuple(om.get_selected() for om in self._menu_components)
 
     def restrict_selection(self, filtered_option_rows: set[int]) -> None:
         """Overwrites the OptionMenu's options to only display the values corresponding to the rows
@@ -222,8 +239,7 @@ class OptionListComponent(MediatorComponent, Frame):
         Precondition:
             - all(0 <= row < len(self._data) for all row in filtered_option_rows)
         """
-        for om in self._menu_components:
-            om.restrict_selection(filtered_option_rows)
+        return  # deprecated
 
 
 ##############################################################################
@@ -242,6 +258,12 @@ class WidgetMediator:
         """Return the mapping of each Widget name to its respective Widget"""
         raise NotImplementedError
 
+    def update_selection(self, data: tuple) -> None:
+        """Receives information of an updated selection in a colleague
+
+        Mediator pattern method to be called by colleagues (MediatorComponents)"""
+        raise NotImplementedError
+
     def reset_selection(self) -> None:
         """Resets the values of all Widget components"""
         raise NotImplementedError
@@ -249,6 +271,10 @@ class WidgetMediator:
 
 class NullMediator(WidgetMediator):
     """Null WidgetMediator for behavior when the Mediator does not exist"""
+
+    def update_selection(self, data: tuple) -> None:
+        """Does nothing since there is nothing to update"""
+        return
 
     def get_selection(self) -> dict[str, Any]:
         """Return an empty dict since there are no Widgets"""
@@ -276,13 +302,13 @@ class MenuMediator(WidgetMediator):
 
     def get_selection(self) -> dict[str, Any]:
         """Return the selected options"""
-        return {name: mc.get_selection() for name, mc in self._components.items()}
+        return {name: mc.get_selected() for name, mc in self._components.items()}
 
     def reset_selection(self) -> None:
         """Removes all currently selected options"""
         for mc in self._components.values():
             mc.reset_selection()
-        self.update_options()
+        self.update_selection(())
 
     def get_components(self) -> dict[str, Widget]:
         """Return all menus handled by this mediator mapped from its arbitrarily given name"""
@@ -294,7 +320,7 @@ class MenuMediator(WidgetMediator):
         for mc in self._components.values():
             mc.configure_menu(config, value)
 
-    def update_options(self) -> None:
+    def update_selection(self, data: tuple) -> None:
         """Updates all the options of the menus to display only valid selections"""
         self.configure_menu("state", "disabled")
         self._reset_all_menus()

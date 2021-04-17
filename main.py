@@ -4,6 +4,7 @@ from typing import Any, Callable
 from usergui import InputFrameBuilder
 from mediatorbuilder import MenuMediatorBuilder
 from shortest_path_calculator import gets_original_gives_full_path
+from pathcalculator import dijkstra
 from visualization import visualise
 
 create_graph_from_matrix = __import__("GUI supporter").load_graph_from_load_data
@@ -41,10 +42,15 @@ def inject_data(data: list[tuple]) -> Callable[[dict[str, Any]], None]:
 
         g = create_graph_from_matrix(filtered_data)
 
-        start_point = filtered_data[0][7:9]
-        end_point = filtered_data[0][9:11]
+        start = options["start street"]
+        end = options["end street"]
 
-        path = gets_original_gives_full_path(g, start_point, end_point, [])
+        intermediate_points = options["intermediate streets"]
+
+        if all(intermediate == "" for intermediate in intermediate_points):
+            path = dijkstra(g, start, end)
+        else:
+            path = gets_original_gives_full_path(g, start, end, list(intermediate_points))
 
         visualise(path, g)
 
@@ -58,7 +64,7 @@ def _filter_by(data: list[tuple], options: dict[str, Any]) -> list[tuple]:
         - every row in the returned list contains every required option
     """
 
-    required = ("day menu", "month menu", "time menu")
+    required = ("time menu", "day menu", "month menu")
     indices = (4, 5, 6)
 
     filtered_matrix = []

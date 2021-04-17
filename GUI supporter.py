@@ -20,22 +20,21 @@ from graph import Graph
 #                     possible_hours.append(row[10])
 #     return possible_hours
 
+DATA_HEADER = (
+    "speed",
+    "start point", "end point",
+    "length",
+    "time", "day", "month",
+    "start point latitude", "start point longitude",
+    "end point latitude", "end point longitude"
+)
+
 
 def load_titled_data(traffic_file: str) -> tuple[tuple, list[tuple]]:
     """Return a matrix mirroring data contained in the csv and its corresponding header"""
 
     data = load_data(traffic_file)
-    header = (
-        "speed",
-        "start point", "end point",
-        "length",
-        "day", "month", "time",
-        "start point latitude", "start point longitude",
-        "end point latitude", "end point longitude"
-    )
-
-    return header, data
-
+    return DATA_HEADER, data
 
 
 def load_data(traffic_file: str) -> list[tuple]:
@@ -51,6 +50,47 @@ def load_data(traffic_file: str) -> list[tuple]:
             data.append(select)
 
     return data
+
+
+def filter_data_from_selection(data: list[tuple], selections: dict[str, list[str]]) -> list[tuple]:
+    """Filter data by complete match for month, day, time and by connectedness for the
+    start and end streets
+
+    Preconditions:
+        - all(title in DATA_HEADER for title in selection)
+        - data must be in the same format as the matrices formed in this module
+    """
+
+    g = Graph()
+    time_headers = _map_header({"time", "day", "month"})
+    filtered = []
+    for row in data:
+        if all(header not in selections or _selection_is_empty(selections[header])
+               or row[col] in selections[header] for header, col in time_headers.items()):
+            if not g.check_in(row[1]):
+                g.add_vertex(row[1], row[7], row[8])
+            if not g.check_in(row[2]):
+                g.add_vertex(row[2], row[9], row[10])
+            g.add_edge(row[1], row[2], row[0], row[3])
+            filtered.append(row)
+    place_headers = _map_header({"start point", "end point"})
+    try:
+        connected_vertices = g.get_all_connected_components(
+            set.union(*(set(selections[header]) for header in place_headers)).difference({''})
+        )
+    except ValueError:
+        connected_vertices = {}
+
+    return [row for row in filtered if any(place in connected_vertices for place in
+                                           [row[i] for _, i in place_headers.items()])]
+
+
+def _map_header(titles: set[str]) -> dict[str, int]:
+    return {header: i for i, header in enumerate(DATA_HEADER) if header in titles}
+
+
+def _selection_is_empty(selection: list[str]) -> bool:
+    return all(item == "" for item in selection)
 
 
 def load_graph_from_load_data(info: list[tuple]):
