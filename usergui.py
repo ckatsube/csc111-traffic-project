@@ -49,12 +49,18 @@ class InputFrameBuilder:
     """Builder class for inputting the settings for the input frame
     """
 
+    _data: list[tuple]
+
     _geometry: str = "300x150"
     _title: str = "Settings Input"
 
     _mb: MediatorBuilder = NullMediatorBuilder()
 
     _command = print
+
+    def set_data(self, data: list[tuple]):
+        """Sets the data to be used for selecting options"""
+        self._data = data
 
     def set_geometry(self, geometry: str):
         """Sets the size of the frame

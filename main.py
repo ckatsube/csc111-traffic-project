@@ -4,10 +4,11 @@ from typing import Any, Callable
 from usergui import InputFrameBuilder
 from mediatorbuilder import MenuMediatorBuilder
 from shortest_path_calculator import gets_original_gives_full_path
+from pathcalculator import dijkstra
 from visualization import visualise
 
-create_graph_from_matrix = __import__("GUI supporter").load_graph_from_load_data
-loader = __import__("GUI supporter").load_titled_data
+from guisupporter import load_graph_from_load_data
+from guisupporter import load_titled_data
 
 CHICAGO_TRAFFIC_FILE = "transformed_final.csv"
 
@@ -16,7 +17,7 @@ def create_and_run_input_frame() -> None:
     """Creates an input frame using the InputFrameBuilder and Chicago traffic dataset
     and runs the frame"""
 
-    header, data = loader(CHICAGO_TRAFFIC_FILE)
+    header, data = load_titled_data(CHICAGO_TRAFFIC_FILE)
     mmb = MenuMediatorBuilder(header, data)
     mmb.create_option_menu("day menu", ("day",))
     mmb.create_option_menu("month menu", ("month",))
@@ -39,12 +40,17 @@ def inject_data(data: list[tuple]) -> Callable[[dict[str, Any]], None]:
 
         filtered_data = _filter_by(data, options)
 
-        g = create_graph_from_matrix(filtered_data)
+        g = load_graph_from_load_data(filtered_data)
 
-        start_point = filtered_data[0][7:9]
-        end_point = filtered_data[0][9:11]
+        start = options["start street"]
+        end = options["end street"]
 
-        path = gets_original_gives_full_path(g, start_point, end_point, [])
+        intermediate_points = filter(lambda x: x != "", options["intermediate streets"])
+
+        if all(intermediate == "" for intermediate in intermediate_points):
+            path = dijkstra(g, start, end)
+        else:
+            path = gets_original_gives_full_path(g, start, end, list(intermediate_points))
 
         visualise(path, g)
 
@@ -58,12 +64,14 @@ def _filter_by(data: list[tuple], options: dict[str, Any]) -> list[tuple]:
         - every row in the returned list contains every required option
     """
 
-    required = ("day menu", "month menu", "time menu")
+    required = ("time menu", "day menu", "month menu")
     indices = (4, 5, 6)
 
     filtered_matrix = []
     for row in data:
-        if all(row[index] == options[title] for title, index in zip(required, indices)):
+        if all(options[title] == "" or row[index] == options[title]
+               for title, index in zip(required, indices)):
+
             filtered_matrix.append(row)
 
     return filtered_matrix

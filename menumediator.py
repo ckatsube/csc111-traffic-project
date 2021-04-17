@@ -4,8 +4,11 @@
 
 from __future__ import annotations
 
-from tkinter import Button, Frame, Variable, OptionMenu, Widget
+from tkinter import Button, Frame, Menu, Variable, OptionMenu, Widget
 from typing import Any, Callable
+from collections import Iterable
+
+from guisupporter import filter_data_from_selection
 
 
 ####################################################################
@@ -16,8 +19,12 @@ from typing import Any, Callable
 class MediatorComponent:
     """Interface for WidgetMediator components"""
 
-    def get_selection(self) -> Any:
+    def get_selected(self) -> Any:
         """Return the current selection(s) of this component"""
+        raise NotImplementedError
+
+    def set_selection(self, data: list) -> None:
+        """Sets the selection of this component to the specified data"""
         raise NotImplementedError
 
     def reset_selection(self) -> None:
@@ -30,14 +37,6 @@ class MediatorComponent:
 
     def configure_menu(self, config: str, value: str) -> None:
         """Configure the settings of all composed widgets"""
-        raise NotImplementedError
-
-    def get_selected_rows(self) -> set[int]:
-        """Return the row # of the current selection using the innate data vector"""
-        raise NotImplementedError
-
-    def restrict_selection(self, filtered_option_rows: set[int]) -> None:
-        """Restrict the selection of this component to the data in the selected row"""
         raise NotImplementedError
 
 
@@ -53,23 +52,42 @@ class OptionMenuComponent(MediatorComponent):
 
     _var: Variable
     _om: OptionMenu
-    _data: list[list]
 
     _parent: Widget
     _mediator: MenuMediator
 
-    def __init__(self, parent: Widget, mediator: MenuMediator, name: str, data: list[list]):
+    def __init__(self, parent: Widget, mediator: MenuMediator, name: str) -> None:
         self._name = name
         self._var = Variable()
         self._parent = parent
         self._mediator = mediator
-        self._om = OptionMenu(parent, self._var, "", *data,
-                              command=lambda _: mediator.update_options())
-        self._data = data
+        self._om = OptionMenu(parent, self._var, "")
 
     def reset_selection(self) -> None:
         """Sets the option menu variable to an empty string"""
         self._var.set("")
+
+    def set_selection(self, data: list) -> None:
+        """Sets the OptionMenu options to data"""
+        menu = self._om["menu"]
+
+        _delete_menu_options(menu)
+
+        def click_command(variable: Variable, opt: Any) -> Callable:
+            """Return the command to be called when clicking an option item"""
+
+            def wrapper() -> None:
+                """Function called when clicking an option item"""
+                variable.set(opt)
+                self._mediator.update_selection(())
+
+            return wrapper
+
+        data = sorted(set(data))
+
+        menu.add_command(label="", command=click_command(self._var, ""))
+        for option in data:
+            menu.add_command(label=option, command=click_command(self._var, option))
 
     def get_widget(self) -> Widget:
         """Return a list containing this OptionMenu"""
@@ -79,52 +97,16 @@ class OptionMenuComponent(MediatorComponent):
         """Configures the setting of the composed dOptionMenu"""
         self._om[config] = value
 
-    def get_selected_rows(self) -> set[int]:
-        """Return a set containing the index of the current variable value in the OptionMenu's
-        source data
-
-        Return a set of all indices if the value is an empty string"""
-
-        value = self._var.get()
-        if value == "":
-            return {i for i in range(0, len(self._data[0]))}
-        else:
-            for row in range(0, len(self._data[0])):
-                if any(self._data[col][row] == value for col in range(len(self._data))):
-                    return {row}
-
-    def get_selection(self) -> Any:
+    def get_selected(self) -> Any:
         """Return the current variable's value"""
         return self._var.get()
 
-    def restrict_selection(self, filtered_option_rows: set[int]) -> None:
-        """Overwrites the OptionMenu's options to only display the values corresponding to the rows
-        in filtered_option_rows
 
-        Precondition:
-            - all(0 <= row < len(self._data) for all row in filtered_option_rows)
-        """
-        menu = self._om["menu"]
-        start, end = 0, "end"
+def _delete_menu_options(menu: Menu) -> None:
+    """Deletes all items/commands from the Menu"""
 
-        menu.delete(start, end)
-
-        options = sorted({self._data[col][row]
-                          for row in filtered_option_rows for col in range(len(self._data))})
-
-        def click_command(variable: Variable, opt: Any) -> Callable:
-            """Return the command to be called when clicking an option item"""
-
-            def wrapper() -> None:
-                """Function called when clicking an option item"""
-                variable.set(opt)
-                self._mediator.update_options()
-
-            return wrapper
-
-        menu.add_command(label="", command=click_command(self._var, ""))
-        for option in options:
-            menu.add_command(label=option, command=click_command(self._var, option))
+    start, end = 0, "end"
+    menu.delete(start, end)
 
 
 class OptionListComponent(MediatorComponent, Frame):
@@ -136,17 +118,15 @@ class OptionListComponent(MediatorComponent, Frame):
     _menu_frame: Frame
 
     _name: str
-    _data: list[list]
 
     _parent: Widget
     _mediator: MenuMediator
 
-    def __init__(self, parent: Widget, mediator: MenuMediator, name: str, data: list[list]):
+    def __init__(self, parent: Widget, mediator: MenuMediator, name: str):
         super().__init__(parent)
         self._name = name
         self._parent = parent
         self._mediator = mediator
-        self._data = data
 
         self._menu_frame = Frame(self)
         self._setup_frame()
@@ -167,13 +147,13 @@ class OptionListComponent(MediatorComponent, Frame):
     def add_option_menu(self) -> None:
         """Adds an OptionMenu to the OptionListComponent"""
 
-        omc = OptionMenuComponent(self._menu_frame, self._mediator, self._name, self._data)
+        omc = OptionMenuComponent(self._menu_frame, self._mediator, self._name)
         self._menu_components.append(omc)
 
         om = omc.get_widget()
         om.pack(anchor="n")
 
-        self._mediator.update_options()
+        self._mediator.update_selection(())
 
     def remove_option_menu(self) -> None:
         """Removes an OptionMenu from the OptionListComponent"""
@@ -190,6 +170,11 @@ class OptionListComponent(MediatorComponent, Frame):
         while len(self._menu_components) > 1:
             self.remove_option_menu()
 
+    def set_selection(self, data: list) -> None:
+        """Restricts the selection of all children OptionMenus to the same data"""
+        for om in self._menu_components:
+            om.set_selection(data)
+
     def get_widget(self) -> Widget:
         """Return self which is the Frame composed of all the internal input menus"""
         return self
@@ -199,31 +184,9 @@ class OptionListComponent(MediatorComponent, Frame):
         for om in self._menu_components:
             om.configure_menu(config, value)
 
-    def get_selected_rows(self) -> set[int]:
-        """Return a set containing the index of the current variable value in the OptionMenu's
-        source data
-
-        Return a set of all indices if the value is an empty string"""
-
-        if all(value == "" for value in self.get_selection()):
-            return {i for i in range(0, len(self._data[0]))}
-        else:
-            selected_rows = (om.get_selected_rows() for om in self._menu_components)
-            return set.union(*selected_rows)
-
-    def get_selection(self) -> Any:
+    def get_selected(self) -> Any:
         """Return the current variable's value"""
-        return tuple(om.get_selection() for om in self._menu_components)
-
-    def restrict_selection(self, filtered_option_rows: set[int]) -> None:
-        """Overwrites the OptionMenu's options to only display the values corresponding to the rows
-        in filtered_option_rows
-
-        Precondition:
-            - all(0 <= row < len(self._data) for all row in filtered_option_rows)
-        """
-        for om in self._menu_components:
-            om.restrict_selection(filtered_option_rows)
+        return tuple(om.get_selected() for om in self._menu_components)
 
 
 ##############################################################################
@@ -242,6 +205,12 @@ class WidgetMediator:
         """Return the mapping of each Widget name to its respective Widget"""
         raise NotImplementedError
 
+    def update_selection(self, data: tuple) -> None:
+        """Receives information of an updated selection in a colleague
+
+        Mediator pattern method to be called by colleagues (MediatorComponents)"""
+        raise NotImplementedError
+
     def reset_selection(self) -> None:
         """Resets the values of all Widget components"""
         raise NotImplementedError
@@ -249,6 +218,10 @@ class WidgetMediator:
 
 class NullMediator(WidgetMediator):
     """Null WidgetMediator for behavior when the Mediator does not exist"""
+
+    def update_selection(self, data: tuple) -> None:
+        """Does nothing since there is nothing to update"""
+        return
 
     def get_selection(self) -> dict[str, Any]:
         """Return an empty dict since there are no Widgets"""
@@ -268,33 +241,61 @@ class MenuMediator(WidgetMediator):
     set of data
     """
 
-    _components: dict[str, MediatorComponent] = {}
+    _data_titles: dict[MediatorComponent, tuple]
+    _components: dict[str, MediatorComponent]
 
-    def add_component(self, name: str, mc: MediatorComponent):
+    _titles: tuple
+    _data: list[tuple]
+
+    def __init__(self, titles: tuple, data: list[tuple]):
+        self._titles = titles
+        self._data = data
+
+        self._data_titles = {}
+        self._components = {}
+
+    def add_component(self, mc: MediatorComponent, component_name: str, titles: tuple):
         """Adds a component"""
-        self._components[name] = mc
+        self._data_titles[mc] = titles
+        self._components[component_name] = mc
 
     def get_selection(self) -> dict[str, Any]:
-        """Return the selected options"""
-        return {name: mc.get_selection() for name, mc in self._components.items()}
+        """Return the mapping of each input menu's given name to its selection
+        """
+        return {name: mc.get_selected() for name, mc in self._components.items()}
+
+    def _get_title_selection(self) -> dict[str, list]:
+        """Return the selected objects in a map from data titles to the selections
+        """
+
+        selections = {}
+        for mc, titles in self._data_titles.items():
+            selected = _flatten(mc.get_selected())
+            for title in titles:
+                if title in selections:
+                    selections[title] = selections[title] + selected
+                else:
+                    selections[title] = selected
+
+        return selections
 
     def reset_selection(self) -> None:
         """Removes all currently selected options"""
-        for mc in self._components.values():
+        for mc in self._data_titles:
             mc.reset_selection()
-        self.update_options()
+        self.update_selection(())
 
     def get_components(self) -> dict[str, Widget]:
         """Return all menus handled by this mediator mapped from its arbitrarily given name"""
-        return {title: c.get_widget() for title, c in self._components.items()}
+        return {name: c.get_widget() for name, c in self._components.items()}
 
     def configure_menu(self, config: str, value: str):
         """Sets the configuration of the specific config to value for all menus
         """
-        for mc in self._components.values():
+        for mc in self._data_titles:
             mc.configure_menu(config, value)
 
-    def update_options(self) -> None:
+    def update_selection(self, data: tuple) -> None:
         """Updates all the options of the menus to display only valid selections"""
         self.configure_menu("state", "disabled")
         self._reset_all_menus()
@@ -303,18 +304,51 @@ class MenuMediator(WidgetMediator):
     def _reset_all_menus(self) -> None:
         """Resets all OptionMenus to only display items that produce a valid selection"""
 
-        filtered_option_rows = self._get_filtered_options()
-        for mc in self._components.values():
-            mc.restrict_selection(filtered_option_rows)
+        filtered_option_rows = filter_data_from_selection(self._data, self._get_title_selection())
+        column_map = _map_title_to_column(self._titles, filtered_option_rows)
+        for mc, titles in self._data_titles.items():
+            mc.set_selection(_flatten([column_map[title] for title in titles]))
 
-    def _get_filtered_options(self) -> set[int]:
-        """Return the set of row numbers such that every selected value is in that row of the data
-        """
 
-        row_selections_per_menu = [mc.get_selected_rows() for mc in self._components.values()]
-        candidate_rows = set.union(*row_selections_per_menu)
+def _create_column_lists(matrix: list[tuple]) -> list[list]:
+    """Return a list of sets such that each set is the set of all items in a column of the matrix
+    """
 
-        selected_rows = {row for row in candidate_rows if
-                         all({row in selection for selection in row_selections_per_menu})}
+    if len(matrix) == 0:
+        return []
+    else:
+        columns = len(matrix[0])
+        column_lists = [[] for _ in range(columns)]
+        for row in matrix:
+            for col, item in enumerate(row):
+                column_lists[col].append(item)
 
-        return selected_rows
+        return column_lists
+
+
+def _map_title_to_column(titles: tuple, matrix: list[tuple]) -> dict[Any, list]:
+    """Return a dict mapping title to the respective column in the matrix
+
+    Preconditions:
+        - all(len(titles) == len(row) for row in matrix)
+    """
+
+    column_data = _create_column_lists(matrix)
+    return {title: column
+            for title, column in zip(titles, column_data)}
+
+
+def _flatten(obj: Any) -> list:
+
+    if _is_collection(obj):
+        flattened = []
+        for nested_component in obj:
+            for element in _flatten(nested_component):
+                flattened.append(element)
+        return flattened
+
+    return[obj]
+
+
+def _is_collection(obj: Any):
+    return isinstance(obj, Iterable) and not isinstance(obj, str)

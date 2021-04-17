@@ -141,6 +141,23 @@ class _Vertex:
         curr_path.pop()
         visited.remove(self.item)
 
+    def get_connected_component(self, visited: set[_Vertex]) -> set:
+        """Return a set of all ITEMS connected to self by a path that does not use
+        any vertices in visited.
+
+        The items of the vertices in visited CANNOT appear in the returned set.
+
+        Preconditions:
+            - self not in visited
+        """
+        visited.add(self)
+        visited_so_far = {self.item}
+        for vertex in self.neighbours:
+            if vertex not in visited:
+                visited_so_far.update(vertex.get_connected_component(visited))
+
+        return visited_so_far
+
 
 class Graph:
     """
@@ -373,6 +390,18 @@ class Graph:
 
         else:
             raise ValueError
+
+    def get_all_connected_components(self, items: set[Any]) -> set[Any]:
+        """Return the union of all connected components for each item in items
+        """
+
+        visited = set()
+        connected = set()
+        for item in items:
+            v = self.get_vertex(item)
+            connected.update(v.get_connected_component(visited))
+
+        return connected
 
 
 def load_graph(chicago_traffic_file: str) -> Graph:
