@@ -24,13 +24,13 @@ class InputFrameBuilder:
 
     _mb: MediatorBuilder = NullMediatorBuilder()
 
-    _command = print
+    _command: Callable = print
 
-    def set_data(self, data: list[tuple]):
+    def set_data(self, data: list[tuple]) -> None:
         """Sets the data to be used for selecting options"""
         self._data = data
 
-    def set_geometry(self, geometry: str):
+    def set_geometry(self, geometry: str) -> None:
         """Sets the size of the frame
 
         Preconditions:
@@ -38,18 +38,18 @@ class InputFrameBuilder:
         """
         self._geometry = geometry
 
-    def set_title(self, title: str):
+    def set_title(self, title: str) -> None:
         """Sets the title of the frame"""
         self._title = title
 
-    def set_button_command(self, command: Callable):
+    def set_button_command(self, command: Callable) -> None:
         """Sets the command called when clicking the button
 
         The dict containing the Widget name to its selection is passed into this command
         """
         self._command = command
 
-    def set_mediator_builder(self, mb: MediatorBuilder):
+    def set_mediator_builder(self, mb: MediatorBuilder) -> None:
         """Sets the MediatorBuilder to use when creating the input frame"""
         self._mb = mb
 
