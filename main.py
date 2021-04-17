@@ -8,6 +8,8 @@ from pathcalculator import dijkstra
 from visualization import visualise
 from mapping import mapping_on_maps_multiple, mapping_on_maps_singular
 
+from graph import Graph
+
 from guisupporter import load_graph_from_load_data
 from guisupporter import load_titled_data
 
@@ -37,27 +39,30 @@ def inject_data(data: list[tuple]) -> Callable[[dict[str, Any]], None]:
     """Wrapper for inserting data into the output function"""
 
     def process_input(options: dict[str, Any]) -> None:
-        """Visualizes path"""
+        """Uses the options to generate the graph and visualize the graph and shortest path"""
 
         filtered_data = _filter_by(data, options)
-
         g = load_graph_from_load_data(filtered_data)
-
-        start = options["start street*"]
-        end = options["end street*"]
-
-        intermediate_points = filter(lambda x: x != "", options["intermediate streets"])
-
-        if all(intermediate == "" for intermediate in intermediate_points):
-            path = list(dijkstra(g, start, end))
-            mapping_on_maps_singular(g, path)
-        else:
-            path = gets_original_gives_full_path(g, start, end, list(intermediate_points))
-            mapping_on_maps_multiple(g, path)
-
-        visualise(path, g)
+        _visualize_graph(g, options)
 
     return process_input
+
+
+def _visualize_graph(g: Graph, options: dict[str, Any]) -> None:
+
+    start = options["start street*"]
+    end = options["end street*"]
+
+    intermediate_points = filter(lambda x: x != "", options["intermediate streets"])
+
+    if all(intermediate == "" for intermediate in intermediate_points):
+        path = list(dijkstra(g, start, end))
+        mapping_on_maps_singular(g, path)
+    else:
+        path = gets_original_gives_full_path(g, start, end, list(intermediate_points))
+        mapping_on_maps_multiple(g, path)
+
+    visualise(path, g)
 
 
 def _filter_by(data: list[tuple], options: dict[str, Any]) -> list[tuple]:
