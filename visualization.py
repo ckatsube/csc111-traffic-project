@@ -56,7 +56,7 @@ def visualise(lst: list, g: Graph) -> None:
     ax.set_xlim(41.65900629, 42.0128288601)
     ax.set_ylim(-87.535052, -87.8367650119)
     for i, txt in enumerate(lst):
-        ax.annotate(txt + ' ,' + str(i), (lst_lat_long[i][0], lst_lat_long[i][1]))
+        ax.annotate(txt + ' ,' + str(i + 1), (lst_lat_long[i][0], lst_lat_long[i][1]))
     ax.imshow(map_img, zorder=0, extent=box, aspect='equal')
 
 
