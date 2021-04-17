@@ -4,21 +4,10 @@ Function(s) that help build the options for the gui interface.
 import csv
 from graph import Graph
 
-# Kaartik's gui supporter
-# def gui_supporter1(chicago_traffic_file: str, start, end, day) -> list:
-#     """
-#     Takes input about the start, end points and the day from user and returns the possible hours to
-#     choose from.
-#     """
-#     possible_hours = []
-#     with open(chicago_traffic_file) as csv_file2:
-#         traffic_data = csv.reader(csv_file2)
-#         next(traffic_data)  # to skip the first row
-#         for row in traffic_data:
-#             if row[6] == start and row[7] == end and row[11] == day:
-#                 if row[10] not in possible_hours:
-#                     possible_hours.append(row[10])
-#     return possible_hours
+
+###################################################################
+# Supported row format and its constants
+###################################################################
 
 DATA_HEADER = (
     "speed",
@@ -28,6 +17,21 @@ DATA_HEADER = (
     "start point latitude", "start point longitude",
     "end point latitude", "end point longitude"
 )
+
+I_SPEED = 0
+I_START = 1
+I_END = 2
+I_LENGTH = 3
+I_TIME = 4
+I_DAY = 5
+I_MONTH = 6
+I_START_LAT = 7
+I_START_LON = 8
+I_END_LAT = 9
+I_END_LON = 10
+
+
+#############################################
 
 
 def load_titled_data(traffic_file: str) -> tuple[tuple, list[tuple]]:
@@ -62,51 +66,64 @@ def filter_data_from_selection(data: list[tuple], selections: dict[str, list]) -
     """
 
     g = Graph()
-    time_headers = _map_header({"time", "day", "month"})
+    time_headers = {"time", "day", "month"}
     filtered = []
     for row in data:
         if all(header not in selections or _selection_is_empty(selections[header])
-               or row[col] in selections[header] for header, col in time_headers.items()):
-            if not g.check_in(row[1]):
-                g.add_vertex(row[1], row[7], row[8])
-            if not g.check_in(row[2]):
-                g.add_vertex(row[2], row[9], row[10])
-            g.add_edge(row[1], row[2], row[0], row[3])
+               or _get(header, row) in selections[header] for header in time_headers):
+            _add_row_to_graph(row, g)
             filtered.append(row)
 
-    if all(value == "" for value in selections["start point"] + selections["end point"]):
+    if _selections_are_empty(selections, ["start point", "end point"]):
         return filtered
+    else:
+        place_headers = {"start point", "end point"}
+        try:
+            connected_vertices = g.get_all_connected_components(
+                set.union(*(set(selections[header]) for header in place_headers)).difference({''})
+            )
+        except ValueError:
+            connected_vertices = {}
 
-    place_headers = _map_header({"start point", "end point"})
-    try:
-        connected_vertices = g.get_all_connected_components(
-            set.union(*(set(selections[header]) for header in place_headers)).difference({''})
-        )
-    except ValueError:
-        connected_vertices = {}
-
-    return [row for row in filtered if any(place in connected_vertices for place in
-                                           [row[i] for _, i in place_headers.items()])]
+        return [row for row in filtered if any(place in connected_vertices for place in
+                                               [_get(header, row) for header in place_headers])]
 
 
-def _map_header(titles: set[str]) -> dict[str, int]:
-    return {header: i for i, header in enumerate(DATA_HEADER) if header in titles}
+def _selections_are_empty(selections: dict[str, list], titles: list[str]) -> bool:
+    return all(_selection_is_empty(selections[title]) for title in titles)
 
 
 def _selection_is_empty(selection: list[str]) -> bool:
-    return all(item == "" for item in selection)
+    return all(value == "" for value in selection)
 
 
-def load_graph_from_load_data(info: list[tuple]):
+def _add_row_to_graph(row: tuple, g: Graph) -> None:
+    if not g.check_in(row[I_START]):
+        g.add_vertex(row[I_START], row[I_START_LAT], row[I_START_LON])
+    if not g.check_in(row[I_END]):
+        g.add_vertex(row[I_END], row[I_END_LAT], row[I_END_LON])
+    g.add_edge(row[I_START], row[I_END], row[I_SPEED], row[I_LENGTH])
+
+
+def _get(header: str, row: tuple) -> str:
     """
-    abcd
+    Preconditions:
+        - header in DATA_HEADERS
+        - row in the module supported format
+    """
+    col = DATA_HEADER.index(header)
+    return row[col]
+
+
+def load_graph_from_load_data(info: list[tuple]) -> Graph:
+    """
+    Loads a graph from the provided matrix of data
+
+    Preconditions:
+        - row is in the supported format for row in info
     """
     g = Graph()
     for row in info:
-        if not g.check_in(row[1]):
-            g.add_vertex(row[1], row[7], row[8])
-        if not g.check_in(row[2]):
-            g.add_vertex(row[2], row[9], row[10])
-        g.add_edge(row[1], row[2], row[0], row[3])
+        _add_row_to_graph(row, g)
 
     return g
