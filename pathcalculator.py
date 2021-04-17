@@ -139,7 +139,7 @@ class Path(Iterable):
         """Return an iterator that can traverse the path"""
         raise NotImplementedError
 
-    def __lt__(self, other: Path):
+    def __lt__(self, other: Path) -> bool:
         """Return whether this Path has a smaller weight than the other Path"""
         return self.get_path_weight() < other.get_path_weight()
 
