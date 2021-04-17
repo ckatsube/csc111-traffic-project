@@ -18,7 +18,7 @@ from __future__ import annotations
 
 from abc import ABC
 from typing import Any
-from collections import Iterable, Iterator
+from collections.abc import Iterable, Iterator
 
 import heapq
 from graph import Graph
