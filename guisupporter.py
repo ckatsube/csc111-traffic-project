@@ -52,7 +52,7 @@ def load_data(traffic_file: str) -> list[tuple]:
     return data
 
 
-def filter_data_from_selection(data: list[tuple], selections: dict[str, list[str]]) -> list[tuple]:
+def filter_data_from_selection(data: list[tuple], selections: dict[str, list]) -> list[tuple]:
     """Filter data by complete match for month, day, time and by connectedness for the
     start and end streets
 
@@ -73,6 +73,10 @@ def filter_data_from_selection(data: list[tuple], selections: dict[str, list[str
                 g.add_vertex(row[2], row[9], row[10])
             g.add_edge(row[1], row[2], row[0], row[3])
             filtered.append(row)
+
+    if all(value == "" for value in selections["start point"] + selections["end point"]):
+        return filtered
+
     place_headers = _map_header({"start point", "end point"})
     try:
         connected_vertices = g.get_all_connected_components(
