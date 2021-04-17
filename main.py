@@ -6,6 +6,7 @@ from mediatorbuilder import MenuMediatorBuilder
 from shortest_path_calculator import gets_original_gives_full_path
 from pathcalculator import dijkstra
 from visualization import visualise
+from mapping import mapping_on_maps_multiple, mapping_on_maps_singular
 
 from guisupporter import load_graph_from_load_data
 from guisupporter import load_titled_data
@@ -22,8 +23,8 @@ def create_and_run_input_frame() -> None:
     mmb.create_option_menu("day menu", ("day",))
     mmb.create_option_menu("month menu", ("month",))
     mmb.create_option_menu("time menu", ("time",))
-    mmb.create_option_menu("start street", ("start point", "end point"))
-    mmb.create_option_menu("end street", ("start point", "end point"))
+    mmb.create_option_menu("start street*", ("start point", "end point"))
+    mmb.create_option_menu("end street*", ("start point", "end point"))
     mmb.create_option_list("intermediate streets", ("start point", "end point"))
 
     ifb = InputFrameBuilder()
@@ -42,15 +43,17 @@ def inject_data(data: list[tuple]) -> Callable[[dict[str, Any]], None]:
 
         g = load_graph_from_load_data(filtered_data)
 
-        start = options["start street"]
-        end = options["end street"]
+        start = options["start street*"]
+        end = options["end street*"]
 
         intermediate_points = filter(lambda x: x != "", options["intermediate streets"])
 
         if all(intermediate == "" for intermediate in intermediate_points):
-            path = dijkstra(g, start, end)
+            path = list(dijkstra(g, start, end))
+            mapping_on_maps_singular(g, path)
         else:
             path = gets_original_gives_full_path(g, start, end, list(intermediate_points))
+            mapping_on_maps_multiple(g, path)
 
         visualise(path, g)
 
