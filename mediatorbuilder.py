@@ -11,7 +11,7 @@ class MediatorBuilder:
     """Interface for building WidgetMediators"""
 
     def get_mediator(self, parent: Widget) -> WidgetMediator:
-        """Return the build Mediator"""
+        """Return the built Mediator"""
         raise NotImplementedError
 
 
@@ -36,10 +36,10 @@ class MenuMediatorBuilder(MediatorBuilder):
 
     _inits: list[Callable[[Widget, MenuMediator], None]] = []
 
-    def __init__(self, titles: tuple, data: list[tuple]):
+    def __init__(self, titles: tuple, data: list[tuple]) -> None:
         """
         Preconditions:
-            - all(len(option_titles) == len(row) for row in options)
+            - all(len(titles) == len(row) for row in data)
         """
         self._titles = titles
         self._data = data
@@ -58,43 +58,23 @@ class MenuMediatorBuilder(MediatorBuilder):
         Preconditions:
             - data_title in self._options
         """
-        self._inits.append(_offset_omc_init(component_name, data_titles))
+
+        def create_omc(parent: Widget, mm: MenuMediator) -> None:
+            """Creates an OptionMenuComponent using the variables taken from the local context"""
+            omc = OptionMenuComponent(parent, mm, component_name)
+            mm.add_component(omc, component_name, data_titles)
+
+        self._inits.append(create_omc)
 
     def create_option_list(self, component_name: str, data_titles: tuple) -> None:
         """
         Preconditions:
             - data_title in self._options
         """
-        self._inits.append(_offset_olc_init(component_name, data_titles))
 
+        def create_olc(parent: Widget, mm: MenuMediator) -> None:
+            """Creates an OptionMenuComponent using the variables taken from the local context"""
+            olc = OptionListComponent(parent, mm, component_name)
+            mm.add_component(olc, component_name, data_titles)
 
-def _offset_omc_init(component_name: str, data_titles: tuple) -> \
-        Callable[[Widget, MenuMediator], None]:
-    """Return a function that takes in the parent widget to use to create the OptionMenuComponents
-
-    This method saves some of the settings for creating an OptionMenuComponent to offset the actual
-    creating until a parent frame is made
-    """
-
-    def create_omc(parent: Widget, mm: MenuMediator) -> None:
-        """Creates an OptionMenuComponent using the variables taken from the local context"""
-        omc = OptionMenuComponent(parent, mm, component_name)
-        mm.add_component(omc, component_name, data_titles)
-
-    return create_omc
-
-
-def _offset_olc_init(component_name: str, data_titles: tuple) -> \
-        Callable[[Widget, MenuMediator], None]:
-    """Return a function that takes in the parent widget to use to create the OptionMenuComponents
-
-    This method saves some of the settings for creating an OptionMenuComponent to offset the actual
-    creating until a parent frame is made
-    """
-
-    def create_olc(parent: Widget, mm: MenuMediator) -> None:
-        """Creates an OptionMenuComponent using the variables taken from the local context"""
-        olc = OptionListComponent(parent, mm, component_name)
-        mm.add_component(olc, component_name, data_titles)
-
-    return create_olc
+        self._inits.append(create_olc)
