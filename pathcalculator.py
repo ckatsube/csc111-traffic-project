@@ -17,7 +17,8 @@ This file is Copyright (c) 2021 Aryaman Modi, Craig Katsube, Garv Sood, Kaartik 
 from __future__ import annotations
 
 from abc import ABC
-from typing import Any, Iterable, Iterator
+from typing import Any
+from collections import Iterable, Iterator
 
 import heapq
 from graph import Graph
