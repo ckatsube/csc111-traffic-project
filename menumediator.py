@@ -117,9 +117,8 @@ class OptionListComponent(MediatorComponent, Frame):
 
     _mediator: MenuMediator
 
-    def __init__(self, parent: Widget, mediator: MenuMediator):
+    def __init__(self, parent: Widget, mediator: MenuMediator) -> None:
         super().__init__(parent)
-        self._parent = parent
         self._mediator = mediator
 
         self._menu_frame = Frame(self)
@@ -254,7 +253,7 @@ class MenuMediator(WidgetMediator):
         self._data_titles = {}
         self._components = {}
 
-    def add_component(self, mc: MediatorComponent, component_name: str, titles: tuple):
+    def add_component(self, mc: MediatorComponent, component_name: str, titles: tuple) -> None:
         """Adds a component associating it with its given name and titles"""
         self._data_titles[mc] = titles
         self._components[component_name] = mc
@@ -289,7 +288,7 @@ class MenuMediator(WidgetMediator):
         """Return all menus handled by this mediator mapped from its arbitrarily given name"""
         return {name: c.get_widget() for name, c in self._components.items()}
 
-    def configure_menu(self, config: str, value: str):
+    def configure_menu(self, config: str, value: str) -> None:
         """Sets the configuration of the specific config to value for all menus
         """
         for mc in self._data_titles:
@@ -350,5 +349,5 @@ def _flatten(obj: Any) -> list:
     return[obj]
 
 
-def _is_collection(obj: Any):
+def _is_collection(obj: Any) -> bool:
     return isinstance(obj, Iterable) and not isinstance(obj, str)
