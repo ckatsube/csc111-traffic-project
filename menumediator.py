@@ -42,24 +42,19 @@ class MediatorComponent:
 
 class OptionMenuComponent(MediatorComponent):
     """WidgetMediator component that contains an OptionMenu
-
-    Representation Invariants:
-        - self._var.get() == "" or self._var_get() in self._data
-            equivalent to (if self._var.get() != "" then self.var.get() in self._data)
     """
-
-    _name: str
+    # Private Attributes:
+    #   - _var: the external mutatable variable for the menu widget
+    #   - _om: the OptionMenu shown to the user that displays the selection
+    #   - _mediator: the mediator to notify a selection has been made to update other colleages
 
     _var: Variable
     _om: OptionMenu
 
-    _parent: Widget
     _mediator: MenuMediator
 
-    def __init__(self, parent: Widget, mediator: MenuMediator, name: str) -> None:
-        self._name = name
+    def __init__(self, parent: Widget, mediator: MenuMediator) -> None:
         self._var = Variable()
-        self._parent = parent
         self._mediator = mediator
         self._om = OptionMenu(parent, self._var, "")
 
@@ -104,7 +99,6 @@ class OptionMenuComponent(MediatorComponent):
 
 def _delete_menu_options(menu: Menu) -> None:
     """Deletes all items/commands from the Menu"""
-
     start, end = 0, "end"
     menu.delete(start, end)
 
@@ -113,18 +107,18 @@ class OptionListComponent(MediatorComponent, Frame):
     """WidgetMediator component allowing for adding and deleting an arbitrary number of
     OptionMenus that rely on the same dataset
     """
+    # Private Attributes:
+    #   _menu_components: stack of OptionMenuComponents to add and remove using buttons
+    #   _menu_frame: the frame to add/remove widgets to/from
+    #   - _mediator: the mediator to notify a selection has been made to update other colleages
 
     _menu_components: list[OptionMenuComponent] = []
     _menu_frame: Frame
 
-    _name: str
-
-    _parent: Widget
     _mediator: MenuMediator
 
-    def __init__(self, parent: Widget, mediator: MenuMediator, name: str):
+    def __init__(self, parent: Widget, mediator: MenuMediator):
         super().__init__(parent)
-        self._name = name
         self._parent = parent
         self._mediator = mediator
 
@@ -145,9 +139,9 @@ class OptionListComponent(MediatorComponent, Frame):
             pack(fill="x", anchor="n")
 
     def add_option_menu(self) -> None:
-        """Adds an OptionMenu to the OptionListComponent"""
+        """Adds an OptionMenu to this component"""
 
-        omc = OptionMenuComponent(self._menu_frame, self._mediator, self._name)
+        omc = OptionMenuComponent(self._menu_frame, self._mediator)
         self._menu_components.append(omc)
 
         om = omc.get_widget()
@@ -156,7 +150,7 @@ class OptionListComponent(MediatorComponent, Frame):
         self._mediator.update_selection(())
 
     def remove_option_menu(self) -> None:
-        """Removes an OptionMenu from the OptionListComponent"""
+        """Removes an OptionMenu from this component"""
         if self._menu_components:
             omc = self._menu_components.pop()
 
@@ -164,7 +158,8 @@ class OptionListComponent(MediatorComponent, Frame):
             om.pack_forget()
 
     def reset_selection(self) -> None:
-        """Sets the all option menu variables to an empty string"""
+        """Sets the all option menu variables to an empty string and removes additional OptionMenus
+        """
         for om in self._menu_components:
             om.reset_selection()
         while len(self._menu_components) > 1:
@@ -185,7 +180,7 @@ class OptionListComponent(MediatorComponent, Frame):
             om.configure_menu(config, value)
 
     def get_selected(self) -> Any:
-        """Return the current variable's value"""
+        """Return a tuple of all children OptionMenu values"""
         return tuple(om.get_selected() for om in self._menu_components)
 
 
@@ -240,6 +235,11 @@ class MenuMediator(WidgetMediator):
     """Class for mediating a collection of input devices (Menus) that operate on a related
     set of data
     """
+    # Private Attributes:
+    #   - _data_titles: the titles each component is associated with
+    #   - _components: the name of each component mapped to said component
+    #   - _titles: all titles of the self._data
+    #   - _data: the data used to mediate between colleagues
 
     _data_titles: dict[MediatorComponent, tuple]
     _components: dict[str, MediatorComponent]
@@ -255,7 +255,7 @@ class MenuMediator(WidgetMediator):
         self._components = {}
 
     def add_component(self, mc: MediatorComponent, component_name: str, titles: tuple):
-        """Adds a component"""
+        """Adds a component associating it with its given name and titles"""
         self._data_titles[mc] = titles
         self._components[component_name] = mc
 

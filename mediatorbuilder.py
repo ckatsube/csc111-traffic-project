@@ -30,6 +30,10 @@ class MenuMediatorBuilder(MediatorBuilder):
     Primarily used to postpone the creation of the Tkinter Widgets in the Mediator system
     due to the necessity of the parent Widget component when creating the child Widgets.
     """
+    # Private Attributes:
+    #   - _titles: the titles of the columns of data
+    #   - _data: data used to mediate between colleagues
+    #   - _inits: promises to create the Widgets when a parent frame is given
 
     _titles: tuple
     _data: list[tuple]
@@ -61,7 +65,7 @@ class MenuMediatorBuilder(MediatorBuilder):
 
         def create_omc(parent: Widget, mm: MenuMediator) -> None:
             """Creates an OptionMenuComponent using the variables taken from the local context"""
-            omc = OptionMenuComponent(parent, mm, component_name)
+            omc = OptionMenuComponent(parent, mm)
             mm.add_component(omc, component_name, data_titles)
 
         self._inits.append(create_omc)
@@ -74,7 +78,7 @@ class MenuMediatorBuilder(MediatorBuilder):
 
         def create_olc(parent: Widget, mm: MenuMediator) -> None:
             """Creates an OptionMenuComponent using the variables taken from the local context"""
-            olc = OptionListComponent(parent, mm, component_name)
+            olc = OptionListComponent(parent, mm)
             mm.add_component(olc, component_name, data_titles)
 
         self._inits.append(create_olc)
